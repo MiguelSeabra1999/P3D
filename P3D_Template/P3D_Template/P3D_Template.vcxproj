@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{78613634-dee0-4e4a-b13d-3c5c6e8b3989}</ProjectGuid>
-    <RootNamespace>P3D_Template1</RootNamespace>
+    <ProjectGuid>{6bcaca0a-62f2-4e11-86e9-fc9c2fb92589}</ProjectGuid>
+    <RootNamespace>P3D_Template</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -124,8 +124,7 @@
       <Command>xcopy /y /d  "$(ProjectDir)Dependencies\lib\$(Platform)\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>Dependencies.exe</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -171,8 +170,7 @@
       <Command>xcopy /y /d  "$(ProjectDir)Dependencies\lib\$(Platform)\*.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>
-      </Command>
+      <Command>Dependencies.exe</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
