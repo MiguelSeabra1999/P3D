@@ -84,7 +84,12 @@ Vector Plane::getNormal(Vector point)
 
 bool Sphere::intercepts(Ray& r, float& t )
 {
-  return (false);
+	Vector oc = r.origin - center;
+	float a = r.direction * r.direction;
+	float b = oc * r.direction * 2.0;
+	float c = oc * oc - radius * radius;
+	float discriminant = b * b - 4 * a * c;
+	return (discriminant > 0);
 }
 
 
