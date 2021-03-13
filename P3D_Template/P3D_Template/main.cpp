@@ -89,17 +89,25 @@ bool isInDirectView(Vector& p1, Vector& p2)
 	return true;
 }
 
-Color trace(Object* obj, Vector& startPoint)
+Color trace(Object* obj, Vector& startPoint, Vector& normal)
 {
 	int lightN = scene->getNumLights();
 	Color lightSum  = Color(0,0,0);
+	Color diffuse, specular;
 	Light* currentLight;
 	Color objectColor = Color(0,0,0);
+	Vector L, r, Ln;
 	for(int i = 0; i < lightN; i++)
 	{
+		
 		currentLight = scene->getLight(i);
-		if(isInDirectView(startPoint, currentLight->position))
+		L = currentLight->position - startPoint;
+		if(L*normal > 0) //isInDirectView
+			//if(!point in shadow)
 		{
+			diffuse = currentLight->color * obj->GetMaterial()->GetDiffuse() * (L * normal);
+			//r = 2 * normal * (L * normal) - L;
+			//specular = currentLight->color * obj->GetMaterial()->GetSpecular() * (L * normal  - L * normal);
 			lightSum += currentLight->color;
 			
 		}
@@ -107,7 +115,7 @@ Color trace(Object* obj, Vector& startPoint)
 
 	}
 	//What about intensity?????
-	objectColor = obj->GetMaterial()->GetDiffColor()* lightSum; //*normal NEED HELPWITH NORMAL
+	objectColor = lightSum; //*normal NEED HELPWITH NORMAL
 
 
 	//falta aqui recursion
@@ -117,18 +125,17 @@ Color trace(Object* obj, Vector& startPoint)
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
-	float IDONTKNOW = 0;
+	float dist = 0;
 	int objectsN = scene->getNumObjects();
 	Object* currentObj;
 	Object* nearestObj = NULL;
-	float dist;
+	Vector normal, hitPoint;
 	float minDist = numeric_limits<float>::max();
 	for(int i = 0 ; i < objectsN; i++)
 	{
 		currentObj = scene->getObject(i);
-		if(currentObj->intercepts(ray, IDONTKNOW))//TODO intercep
+		if(currentObj->intercepts(ray, dist))//TODO intercep
 		{
-			dist = getDistance(currentObj);
 			if(dist < minDist)
 			{
 				minDist = dist;
@@ -139,11 +146,15 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	}
 	if(nearestObj != NULL)
 	{
+		hitPoint = ray.origin + ray.direction * minDist;
+		normal = nearestObj->getNormal(hitPoint);
+		
+		
 		//TODO SHADING
 		//TODO shadow casting
 		//TODO new raycasts for reflection and refraction
 		//trace(nearestObj);
-		return nearestObj->GetMaterial()->GetDiffColor();
+		return trace(nearestObj, hitPoint, normal);
 	}
 
 
@@ -363,7 +374,7 @@ void renderScene()
 
 			/*YOUR 2 FUNTIONS:*/
 			Ray ray = scene->GetCamera()->PrimaryRay(pixel);
-			color = rayTracing(ray, 1, 1.0).clamp();
+			color = rayTracing(ray, 1.0, 1.0).clamp();
 
 
 			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template

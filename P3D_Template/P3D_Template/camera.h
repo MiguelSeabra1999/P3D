@@ -75,32 +75,18 @@ public:
 	Ray PrimaryRay(const Vector& pixel_sample) //  Rays cast from the Eye to a pixel sample which is in Viewport coordinates
 	{
 		Vector ray_dir;
-		ray_dir = GetRayDirection(pixel_sample);
+
 		return Ray(eye, ray_dir);  
 	}
 
 	Ray PrimaryRay(const Vector& lens_sample, const Vector& pixel_sample) // DOF: Rays cast from  a thin lens sample to a pixel sample
 	{
-		Vector ray_dir ;
+		
+		Vector ray_dir;
 		Vector eye_offset;
-		ray_dir = GetRayDirection(pixel_sample);
+
 		return Ray(eye_offset, ray_dir);
 	}
-	Vector GetRayDirection(const Vector& pixel_sample)
-	{
-		float viewportX = pixel_sample.x / res_x - 0.5f;
-		float viewportY = pixel_sample.y / res_y - 0.5f;
-
-		viewportX = w * viewportX;
-		viewportY = h * viewportY;
-
-		Vector xComponent = u * viewportX;
-		Vector yComponent = v * viewportY;
-
-		Vector ray_dir = (xComponent + yComponent - n * plane_dist).normalize();
-		return ray_dir;
-	}
-
 };
 
 #endif

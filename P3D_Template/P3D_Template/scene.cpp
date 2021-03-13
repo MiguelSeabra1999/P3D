@@ -88,8 +88,19 @@ bool Sphere::intercepts(Ray& r, float& t )
 	float a = r.direction * r.direction;
 	float b = oc * r.direction * 2.0;
 	float c = oc * oc - radius * radius;
-	float discriminant = b * b - 4 * a * c;
-	return (discriminant > 0);
+	float discriminant = b * b - 4 * a * c; //maybe its b*b -c
+
+	//if (c > 0.0f && b <= 0.0f) //sphere behind the ray
+		//return false;
+	if (discriminant <= 0)
+		return false;
+	else {
+		if (c > 0.0f)
+			t = b - sqrt(b * b - c); //origin outside the smallest root
+		else
+			t = b + sqrt(b * b - c);
+		return true;
+	}
 }
 
 
