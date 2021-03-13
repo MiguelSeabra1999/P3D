@@ -93,21 +93,18 @@ Color trace(Object* obj, Vector& startPoint, Vector& normal)
 {
 	int lightN = scene->getNumLights();
 	Color lightSum  = Color(0,0,0);
-	Color diffuse, specular;
 	Light* currentLight;
 	Color objectColor = Color(0,0,0);
-	Vector L, r, Ln;
+	Vector L;
 	for(int i = 0; i < lightN; i++)
 	{
 		
 		currentLight = scene->getLight(i);
 		L = currentLight->position - startPoint;
-		if(L*normal > 0) //isInDirectView
+		if(L * normal > 0) //isInDirectView
 			//if(!point in shadow)
 		{
-			diffuse = currentLight->color * obj->GetMaterial()->GetDiffuse() * (L * normal);
-			//r = 2 * normal * (L * normal) - L;
-			//specular = currentLight->color * obj->GetMaterial()->GetSpecular() * (L * normal  - L * normal);
+
 			lightSum += currentLight->color;
 			
 		}
@@ -156,7 +153,6 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 		//trace(nearestObj);
 		return trace(nearestObj, hitPoint, normal);
 	}
-
 
 	return scene->GetBackgroundColor();
 }
@@ -374,7 +370,7 @@ void renderScene()
 
 			/*YOUR 2 FUNTIONS:*/
 			Ray ray = scene->GetCamera()->PrimaryRay(pixel);
-			color = rayTracing(ray, 1.0, 1.0).clamp();
+			color = rayTracing(ray, 1, 1.0).clamp();
 
 
 			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
