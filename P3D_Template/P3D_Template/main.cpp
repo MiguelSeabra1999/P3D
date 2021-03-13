@@ -18,7 +18,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <IL/il.h>
-
+#include <limits>       // std::numeric_limits
 #include "scene.h"
 #include "grid.h"
 #include "maths.h"
@@ -77,12 +77,80 @@ int RES_X, RES_Y;
 
 int WindowHandle = 0;
 
+float getDistance(Object* obj)
+{
+	//TODO
+	return 0;
+}
+
+bool isInDirectView(Vector& p1, Vector& p2)
+{
+	//Cast ray from p1 to p2 and see if any other object obstructs the path
+	return true;
+}
+
+Color trace(Object* obj, Vector& startPoint)
+{
+	int lightN = scene->getNumLights();
+	Color lightSum  = Color(0,0,0);
+	Light* currentLight;
+	Color objectColor = Color(0,0,0);
+	for(int i = 0; i < lightN; i++)
+	{
+		currentLight = scene->getLight(i);
+		if(isInDirectView(startPoint, currentLight->position))
+		{
+			lightSum += currentLight->color;
+			
+		}
+
+
+	}
+	//What about intensity?????
+	objectColor = obj->GetMaterial()->GetDiffColor()* lightSum; //*normal NEED HELPWITH NORMAL
+
+
+	//falta aqui recursion
+
+	return objectColor;
+}
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
-	//INSERT HERE YOUR CODE
-	return Color(0.0f, 0.0f, 0.0f);
+	float IDONTKNOW = 0;
+	int objectsN = scene->getNumObjects();
+	Object* currentObj;
+	Object* nearestObj = NULL;
+	float dist;
+	float minDist = numeric_limits<float>::max();
+	for(int i = 0 ; i < objectsN; i++)
+	{
+		currentObj = scene->getObject(i);
+		if(currentObj->intercepts(ray, IDONTKNOW))//TODO intercep
+		{
+			dist = getDistance(currentObj);
+			if(dist < minDist)
+			{
+				minDist = dist;
+				nearestObj = currentObj;
+			}
+
+		}
+	}
+	if(nearestObj != NULL)
+	{
+		//TODO SHADING
+		//TODO shadow casting
+		//TODO new raycasts for reflection and refraction
+		//trace(nearestObj);
+		return nearestObj->GetMaterial()->GetDiffColor();
+	}
+
+
+	return scene->GetBackgroundColor();
 }
+
+
 
 /////////////////////////////////////////////////////////////////////// ERRORS
 
@@ -293,12 +361,12 @@ void renderScene()
 			pixel.x = x + 0.5f;  
 			pixel.y = y + 0.5f;
 
-			/*YOUR 2 FUNTIONS:
+			/*YOUR 2 FUNTIONS:*/
 			Ray ray = scene->GetCamera()->PrimaryRay(pixel);
 			color = rayTracing(ray, 1, 1.0).clamp();
-			*/
 
-			color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
+
+			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
 
 			img_Data[counter++] = u8fromfloat((float)color.r());
 			img_Data[counter++] = u8fromfloat((float)color.g());
