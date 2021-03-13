@@ -89,31 +89,33 @@ bool isInDirectView(Vector& p1, Vector& p2)
 	return true;
 }
 
-Color trace(Object* obj, Vector& startPoint, Vector& normal)
+Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray)
 {
 	int lightN = scene->getNumLights();
 	Color lightSum  = Color(0,0,0);
 	Light* currentLight;
 	Color objectColor = Color(0,0,0);
+	Color diffuse, specular;
 	Vector L;
 	for(int i = 0; i < lightN; i++)
 	{
 		
 		currentLight = scene->getLight(i);
-		L = currentLight->position - startPoint;
+		L = hitPoint - currentLight->position;
 		if(L * normal > 0) //isInDirectView
 			//if(!point in shadow)
 		{
-
-			lightSum += currentLight->color;
+			diffuse = currentLight->color * obj->GetMaterial()->GetDiffColor() * (L * normal);
+			specular = currentLight->color * obj->GetMaterial()->GetSpecular() * pow(((ray.direction * (-1)) * ((L + (ray.direction * (-1)))/2)), 5); // n???
+			lightSum += diffuse + specular;
+			
 			
 		}
 
-
 	}
+
 	//What about intensity?????
 	objectColor = lightSum; //*normal NEED HELPWITH NORMAL
-
 
 	//falta aqui recursion
 
@@ -151,7 +153,7 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 		//TODO shadow casting
 		//TODO new raycasts for reflection and refraction
 		//trace(nearestObj);
-		return trace(nearestObj, hitPoint, normal);
+		return trace(nearestObj, hitPoint, normal, ray);
 	}
 
 	return scene->GetBackgroundColor();
