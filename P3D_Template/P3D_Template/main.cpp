@@ -89,26 +89,53 @@ bool isInDirectView(Vector& p1, Vector& p2)
 	return true;
 }
 
+bool isPointObstructed(Vector fromPoint, Vector toPoint,Object* obj)
+{
+	int objectN = scene->getNumObjects();
+	
+	Vector line = toPoint - fromPoint;
+	float lineLength = line.length();
+
+	Ray ray = Ray(fromPoint, line.normalize());
+	Object* currentObj;
+	float dist;
+	for(int i = 0; i < objectN; i++)
+	{
+		currentObj = scene->getObject(i);
+	
+		if(currentObj != obj && currentObj->intercepts(ray, dist))
+		{
+			if (dist <= lineLength/* && dist > 0.01f*/)//this second part is a problem
+				return true;
+		}
+	}
+	return false;
+}
+
 Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray)
 {
+	
 	int lightN = scene->getNumLights();
 	Color lightSum  = Color(0,0,0);
 	Light* currentLight;
 	Color objectColor = Color(0,0,0);
 	Color diffuse, specular;
-	Vector L;
+	Vector L,v,h;
 	for(int i = 0; i < lightN; i++)
 	{
 		
-		currentLight = scene->getLight(i);
-		L = hitPoint - currentLight->position;
-		if(L * normal > 0) //isInDirectView
-			//if(!point in shadow)
+		currentLight = scene->getLight(1);
+		L = currentLight->position - hitPoint  ;
+		//if(L * normal > 0) //isInDirectView
+		if(!isPointObstructed(hitPoint, currentLight->position,obj) /*&& L * normal > 0*/)
 		{
+			v = ray.direction * (-1);
+			h = (L + v).normalize();
+			specular = currentLight->color * obj->GetMaterial()->GetSpecular() * pow(h * normal, 500);
+
 			diffuse = currentLight->color * obj->GetMaterial()->GetDiffColor() * (L * normal);
-			specular = currentLight->color * obj->GetMaterial()->GetSpecular() * pow(((ray.direction * (-1)) * ((L + (ray.direction * (-1)))/2)), 5); // n???
+		
 			lightSum += diffuse + specular;
-			
 			
 		}
 
@@ -118,13 +145,13 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray)
 	objectColor = lightSum; //*normal NEED HELPWITH NORMAL
 
 	//falta aqui recursion
-
+	//return Color(0, 1, 0);
 	return objectColor;
 }
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
-	float dist = 0;
+	float dist ;
 	int objectsN = scene->getNumObjects();
 	Object* currentObj;
 	Object* nearestObj = NULL;
@@ -133,16 +160,20 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	for(int i = 0 ; i < objectsN; i++)
 	{
 		currentObj = scene->getObject(i);
-		if(currentObj->intercepts(ray, dist))//TODO intercep
+		if(currentObj->intercepts(ray, dist))
 		{
+			
 			if(dist < minDist)
 			{
+		
 				minDist = dist;
 				nearestObj = currentObj;
 			}
 
 		}
 	}
+
+
 	if(nearestObj != NULL)
 	{
 		hitPoint = ray.origin + ray.direction * minDist;
@@ -152,8 +183,8 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 		//TODO SHADING
 		//TODO shadow casting
 		//TODO new raycasts for reflection and refraction
-		//trace(nearestObj);
-		return trace(nearestObj, hitPoint, normal, ray);
+		//return Color(minDist/7,0,0);
+	    return trace(nearestObj, hitPoint, normal, ray);
 	}
 
 	return scene->GetBackgroundColor();

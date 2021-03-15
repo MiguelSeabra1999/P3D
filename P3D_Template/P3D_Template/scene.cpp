@@ -84,23 +84,33 @@ Vector Plane::getNormal(Vector point)
 
 bool Sphere::intercepts(Ray& r, float& t )
 {
-	Vector oc = r.origin - center;
-	float a = r.direction * r.direction;
-	float b = oc * r.direction * 2.0;
-	float c = oc * oc - radius * radius;
-	float discriminant = b * b - 4 * a * c; //maybe its b*b -c
+    Vector oc = r.origin - center;
+    float a = r.direction * r.direction;
+    float b = oc * r.direction;
+    float c = oc * oc - radius * radius;
+    float discriminant = b * b - a * c; //maybe its b*b -c
 
-	//if (c > 0.0f && b <= 0.0f) //sphere behind the ray
-		//return false;
-	if (discriminant <= 0)
-		return false;
-	else {
-		if (c > 0.0f)
-			t = b - sqrt(b * b - c); //origin outside the smallest root
-		else
-			t = b + sqrt(b * b - c);
-		return true;
-	}
+    //if (c > 0.0f && b <= 0.0f) //sphere behind the ray
+        //return false;
+    if (discriminant <= 0)
+        return false;
+
+    discriminant = sqrt(discriminant) / a;
+    b = -b / a;
+
+    float intersection0 = b - discriminant;
+    if (intersection0 >= (float)0) {
+        t = intersection0;
+        return true;
+    }
+
+    float intersection1 = b + discriminant;
+    if (intersection1 >= (float)0) {
+        t = intersection1;
+        return true;
+    }
+
+    return false;
 }
 
 
