@@ -77,22 +77,11 @@ int RES_X, RES_Y;
 
 int WindowHandle = 0;
 
-float getDistance(Object* obj)
-{
-	//TODO
-	return 0;
-}
+Color rayTracing(Ray ray, int depth, float ior_1);
 
-bool isInDirectView(Vector& p1, Vector& p2)
-{
-	//Cast ray from p1 to p2 and see if any other object obstructs the path
-	return true;
-}
-
-bool isPointObstructed(Vector fromPoint, Vector toPoint,Object* obj)
+bool isPointObstructed(Vector fromPoint, Vector toPoint)
 {
 	int objectN = scene->getNumObjects();
-	
 	Vector line = toPoint - fromPoint;
 	float lineLength = line.length();
 
@@ -102,55 +91,76 @@ bool isPointObstructed(Vector fromPoint, Vector toPoint,Object* obj)
 	for(int i = 0; i < objectN; i++)
 	{
 		currentObj = scene->getObject(i);
+
 	
-		if(currentObj != obj && currentObj->intercepts(ray, dist))
+		if(currentObj->intercepts(ray, dist))
 		{
-			if (dist <= lineLength/* && dist > 0.01f*/)//this second part is a problem
+			if (dist <= lineLength)
 				return true;
 		}
 	}
 	return false;
 }
 
-Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray)
+Color calculateColor(Light* light, Object* obj, Vector& L, Vector& normal, Vector& eyeDir)
+{
+	Vector v, h;
+	v = eyeDir * (-1);
+	h = (L + v).normalize();
+
+	Color specular = light->color * obj->GetMaterial()->GetSpecular() * pow(h * v, 5);
+	Color diffuse = light->color * obj->GetMaterial()->GetDiffuse() * max((L * normal), 0);
+	return diffuse + specular;
+}
+
+Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, int depth)
 {
 	
 	int lightN = scene->getNumLights();
 	Color lightSum  = Color(0,0,0);
 	Light* currentLight;
 	Color objectColor = Color(0,0,0);
-	Color diffuse, specular;
+
 	Vector L,v,h;
 	for(int i = 0; i < lightN; i++)
 	{
 		
-		currentLight = scene->getLight(1);
+		currentLight = scene->getLight(i);
 		L = currentLight->position - hitPoint  ;
-		//if(L * normal > 0) //isInDirectView
-		if(!isPointObstructed(hitPoint, currentLight->position,obj) /*&& L * normal > 0*/)
-		{
-			v = ray.direction * (-1);
-			h = (L + v).normalize();
-			specular = currentLight->color * obj->GetMaterial()->GetSpecular() * pow(h * normal, 500);
-
-			diffuse = currentLight->color * obj->GetMaterial()->GetDiffColor() * (L * normal);
-		
-			lightSum += diffuse + specular;
-			
-		}
+		if(L * normal > 0) //isInDirectView
+			if(!isPointObstructed(hitPoint, currentLight->position) /*&& L * normal > 0*/)
+			{
+				lightSum += calculateColor(currentLight, obj, L,normal,ray.direction);
+			}
 
 	}
 
 	//What about intensity?????
-	objectColor = lightSum; //*normal NEED HELPWITH NORMAL
+	objectColor = lightSum.clamp(); 
+
+
+	if (depth > MAX_DEPTH)
+		return objectColor;
+
+	float reflectionIndex = obj->GetMaterial()->GetReflection();
+	if (reflectionIndex > 0)
+	{
+		Vector inverseDirection = ray.direction * -1;
+		float newDirFloat = 2 * (inverseDirection * normal);
+		Vector newDir = normal * newDirFloat - inverseDirection;
+
+		Ray newRay = Ray(hitPoint , newDir);
+		objectColor = objectColor *(1-reflectionIndex) + rayTracing(newRay, depth + 1, 10000) * reflectionIndex;
+	}
 
 	//falta aqui recursion
-	//return Color(0, 1, 0);
-	return objectColor;
+
+	return objectColor.clamp();
 }
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
+	float displaceBias =0.0001f;
 	float dist ;
 	int objectsN = scene->getNumObjects();
 	Object* currentObj;
@@ -178,13 +188,14 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	{
 		hitPoint = ray.origin + ray.direction * minDist;
 		normal = nearestObj->getNormal(hitPoint);
+		hitPoint = hitPoint + normal * displaceBias;
 		
 		
 		//TODO SHADING
 		//TODO shadow casting
 		//TODO new raycasts for reflection and refraction
 		//return Color(minDist/7,0,0);
-	    return trace(nearestObj, hitPoint, normal, ray);
+	    return trace(nearestObj, hitPoint, normal, ray,0);
 	}
 
 	return scene->GetBackgroundColor();
