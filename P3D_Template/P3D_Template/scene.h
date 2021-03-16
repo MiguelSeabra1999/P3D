@@ -93,6 +93,7 @@ class Plane : public Object
 protected:
   Vector	 PN;
   float 	 D;
+  Vector pointA;
 
 public:
 		 Plane		(Vector& PNc, float Dc);
