@@ -108,8 +108,8 @@ Color calculateColor(Light* light, Object* obj, Vector& L, Vector& normal, Vecto
 	v = eyeDir * (-1);
 	h = (L + v).normalize();
 
-	Color specular = light->color * obj->GetMaterial()->GetSpecular() * pow(h * v, 5);
-	Color diffuse = light->color * obj->GetMaterial()->GetDiffuse() * max((L * normal), 0);
+	Color specular = (light->color + obj->GetMaterial()->GetSpecColor()) * 0.5 * obj->GetMaterial()->GetSpecular() * pow(h * normal, 5);
+	Color diffuse = (light->color + obj->GetMaterial()->GetDiffColor()) * 0.5 * obj->GetMaterial()->GetDiffuse() * max((L * normal), 0);
 	return diffuse + specular;
 }
 

@@ -56,6 +56,8 @@ Plane::Plane(Vector& P0, Vector& P1, Vector& P2)
 
    //Calculate the normal plane: counter-clockwise vectorial product.
    PN = P02 % P01;
+   //if (P01 * PN < 0)
+	 //  PN = P02 % P01;
 
    if ((l=PN.length()) == 0.0)
    {
@@ -79,11 +81,10 @@ bool Plane::intercepts(Ray& r, float& t)
 
 	double denominator = PN * r.direction;
 	if (denominator > 0) {
-		t = (r.origin - pointA) * PN;
+		t = (pointA -r.origin) * PN;
 		t = t / denominator;
-		if (t > 0) return true;
+		if (t > 0.0001) return true;
 	}
-
 	return false;
 }
 
@@ -150,7 +151,67 @@ AABB aaBox::GetBoundingBox() {
 
 bool aaBox::intercepts(Ray& ray, float& t)
 {
-		return (false);
+	double ox = ray.origin.x; double oy = ray.origin.y; double oz = ray.origin.z;
+	double dx = ray.direction.x; double dy = ray.direction.y; double dz = ray.direction.z;
+
+	double tx_min, ty_min, tz_min;
+	double tx_max, ty_max, tz_max;
+
+	double a = 1.0 / dx;
+	if (a >= 0) {
+		tx_min = (min.x - ox) * a;
+		tx_max = (max.x - ox) * a;
+	}
+	else {
+		tx_min = (max.x - ox) * a;
+		tx_max = (min.x - ox) * a;
+	}
+
+	double b = 1.0 / dy;
+	if (b >= 0) {
+		ty_min = (min.y - oy) * b;
+		ty_max = (max.y - oy) * b;
+	}
+	else {
+		ty_min = (max.y - oy) * b;
+		ty_max = (min.y - oy) * b;
+	}
+
+	double c = 1.0 / dz;
+	if (c >= 0) {
+		tz_min = (min.z - oz) * c;
+		tz_max = (max.z - oz) * c;
+	}
+	else {
+		tz_min = (max.z - oz) * c;
+		tz_max = (min.z - oz) * c;
+	}
+
+	double t0, t1;
+
+	// find largest entering t value
+
+	if (tx_min > ty_min)
+		t0 = tx_min;
+	else
+		t0 = ty_min;
+
+	if (tz_min > t0)
+		t0 = tz_min;
+
+	// find smallest exiting t value
+
+	if (tx_max < ty_max)
+		t1 = tx_max;
+	else
+		t1 = ty_max;
+
+	if (tz_max < t1)
+		t1 = tz_max;
+
+	bool hit(t0 < t1&& t1 > 0.0001);
+	t = t1;
+	return hit;
 }
 
 Vector aaBox::getNormal(Vector point)
