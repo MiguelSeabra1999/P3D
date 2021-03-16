@@ -108,8 +108,8 @@ Color calculateColor(Light* light, Object* obj, Vector& L, Vector& normal, Vecto
 	v = eyeDir * (-1);
 	h = (L + v).normalize();
 
-	Color specular = (light->color + obj->GetMaterial()->GetSpecColor()) * 0.5 * obj->GetMaterial()->GetSpecular() * pow(h * normal, 5);
-	Color diffuse = (light->color + obj->GetMaterial()->GetDiffColor()) * 0.5 * obj->GetMaterial()->GetDiffuse() * max((L * normal), 0);
+	Color specular = (light->color * obj->GetMaterial()->GetSpecColor()) * obj->GetMaterial()->GetSpecular() *pow(max(h * normal,0), obj->GetMaterial()->GetShine());
+	Color diffuse = (light->color * obj->GetMaterial()->GetDiffColor()) *  obj->GetMaterial()->GetDiffuse() * max((L * normal), 0);
 	return diffuse + specular;
 }
 
@@ -127,8 +127,9 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, int depth)
 		
 		currentLight = scene->getLight(i);
 		L = currentLight->position - hitPoint  ;
+		L.normalize();
 		if(L * normal > 0) //isInDirectView
-			if(!isPointObstructed(hitPoint, currentLight->position) /*&& L * normal > 0*/)
+			if(!isPointObstructed(hitPoint, currentLight->position) && L * normal > 0)
 			{
 				lightSum += calculateColor(currentLight, obj, L,normal,ray.direction);
 			}
@@ -138,7 +139,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, int depth)
 	//What about intensity?????
 	objectColor = lightSum.clamp(); 
 
-
+	//return objectColor;
 	if (depth > MAX_DEPTH)
 		return objectColor;
 
@@ -670,7 +671,7 @@ void init(int argc, char* argv[])
 void init_scene(void)
 {
 	char scenes_dir[70] = "P3D_Scenes/";
-	char input_user[50];
+	char input_user[50] = "balls_low.p3f";
 	char scene_name[70];
 
 	scene = new Scene();
@@ -679,7 +680,8 @@ void init_scene(void)
 
 		while (true) {
 			cout << "Input the Scene Name: ";
-			cin >> input_user;
+			//cin >> input_user;
+			
 			strcpy_s(scene_name, sizeof(scene_name), scenes_dir);
 			strcat_s(scene_name, sizeof(scene_name), input_user);
 
