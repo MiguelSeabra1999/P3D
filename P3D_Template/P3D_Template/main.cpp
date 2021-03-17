@@ -30,6 +30,7 @@
 #define COLOR_ATTRIB 1
 
 #define MAX_DEPTH 4
+#define DISPLACE_BIAS 0.0001
 
 unsigned int FrameCount = 0;
 
@@ -107,13 +108,14 @@ Color calculateColor(Light* light, Object* obj, Vector& L, Vector& normal, Vecto
 	Vector v, h;
 	v = eyeDir * (-1);
 	h = (L + v).normalize();
+	Vector myNormal = normal;
 
 	Color specular = (light->color * obj->GetMaterial()->GetSpecColor()) * obj->GetMaterial()->GetSpecular() *pow(max(h * normal,0), obj->GetMaterial()->GetShine());
 	Color diffuse = (light->color * obj->GetMaterial()->GetDiffColor()) *  obj->GetMaterial()->GetDiffuse() * max((L * normal), 0);
 	return diffuse + specular;
 }
 
-Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, int depth)
+Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,int depth)
 {
 	
 	int lightN = scene->getNumLights();
@@ -131,15 +133,19 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, int depth)
 		if(L * normal > 0) //isInDirectView
 			if(!isPointObstructed(hitPoint, currentLight->position) && L * normal > 0)
 			{
-				lightSum += calculateColor(currentLight, obj, L,normal,ray.direction);
+				Vector shadingNormal = normal;
+				if(normal* ray.direction > 0)
+				{
+					shadingNormal = normal*-1;
+				}
+				lightSum += calculateColor(currentLight, obj, L, shadingNormal,ray.direction);
 			}
 
 	}
 
-	//What about intensity?????
+
 	objectColor = lightSum.clamp(); 
 
-	//return objectColor;
 	if (depth > MAX_DEPTH)
 		return objectColor;
 
@@ -151,17 +157,64 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, int depth)
 		Vector newDir = normal * newDirFloat - inverseDirection;
 
 		Ray newRay = Ray(hitPoint , newDir);
-		objectColor = objectColor *(1-reflectionIndex) + rayTracing(newRay, depth + 1, 10000) * reflectionIndex;
+		objectColor = objectColor *(1-reflectionIndex) + rayTracing(newRay,  depth + 1,ior_1) * reflectionIndex;
+		objectColor.clamp();
 	}
 
-	//falta aqui recursion
+	float refractionIndex = obj->GetMaterial()->GetRefrIndex();
+	if(refractionIndex > 0)
+	{
+		float fromIor;
+		float toIor;
+		Vector actualHitPoint;
+		Vector invertedNormal = normal * -1;
+		actualHitPoint = hitPoint;
+		if(ray.direction * normal <=0)
+		{
+			fromIor = ior_1;
+			toIor = refractionIndex;
+			actualHitPoint = hitPoint + invertedNormal * DISPLACE_BIAS*2;
+		
+		}else
+		{
+			fromIor = refractionIndex;
+			toIor = ior_1;
+			toIor = refractionIndex;
+			actualHitPoint = hitPoint + normal * DISPLACE_BIAS * 2;
+		 
 
-	return objectColor.clamp();
+		}
+
+
+		Vector invertedRayDirection = ray.direction * -1;
+		
+		float cosTetaI = invertedRayDirection * normal;
+		float sinTetaI = sqrt(-1 * cosTetaI * cosTetaI + 1);
+		float sinTetaT = (toIor / fromIor) * sinTetaI;
+		float cosTetaT = sqrt(1- sinTetaT*sinTetaT);
+		Vector V = normal*(invertedRayDirection * normal)  - invertedRayDirection;
+		
+		V.normalize();
+		Vector refractionDirection = V*sinTetaT +  invertedNormal*cosTetaT;
+		refractionDirection.normalize();
+
+		float aux = (fromIor - toIor) / (fromIor + toIor);
+		float R0 = (aux * aux);
+		
+		float attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 5);//attenuation Has a problem! 
+		attenuation = abs(attenuation);
+
+		Ray refractionRay =  Ray(actualHitPoint, refractionDirection);
+		Color refractedColor = rayTracing(refractionRay, depth+1, ior_1);
+		objectColor = objectColor * attenuation + refractedColor * (1-attenuation);
+		objectColor.clamp();
+	}
+	return objectColor;
 }
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
 {
-	float displaceBias =0.0001f;
+	
 	float dist ;
 	int objectsN = scene->getNumObjects();
 	Object* currentObj;
@@ -189,14 +242,15 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	{
 		hitPoint = ray.origin + ray.direction * minDist;
 		normal = nearestObj->getNormal(hitPoint);
-		hitPoint = hitPoint + normal * displaceBias;
+		if(ray.direction * normal <= 0)
+			hitPoint = hitPoint + normal * DISPLACE_BIAS;
+		else
+			hitPoint = hitPoint - normal * DISPLACE_BIAS;
+
 		
 		
-		//TODO SHADING
-		//TODO shadow casting
-		//TODO new raycasts for reflection and refraction
-		//return Color(minDist/7,0,0);
-	    return trace(nearestObj, hitPoint, normal, ray,0);
+		
+	    return trace(nearestObj, hitPoint, normal, ray,ior_1, depth);
 	}
 
 	return scene->GetBackgroundColor();
