@@ -122,6 +122,8 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	Color lightSum  = Color(0,0,0);
 	Light* currentLight;
 	Color objectColor = Color(0,0,0);
+	Color reflectionColor, refractionColor;
+	float attenuation;
 
 	Vector L,v,h;
 	for(int i = 0; i < lightN; i++)
@@ -152,23 +154,30 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	float reflectionIndex = obj->GetMaterial()->GetReflection();
 	if (reflectionIndex > 0)
 	{
+		Vector myNormal;
+		if (ray.direction * normal > 0)
+
+		{
+			myNormal = normal *-1;
+		}
 		Vector inverseDirection = ray.direction * -1;
-		float newDirFloat = 2 * (inverseDirection * normal);
-		Vector newDir = normal * newDirFloat - inverseDirection;
+		float newDirFloat = 2 * (inverseDirection * myNormal);
+		Vector newDir = myNormal * newDirFloat - inverseDirection;
 
 		Ray newRay = Ray(hitPoint , newDir);
-		objectColor = objectColor *(1-reflectionIndex) + rayTracing(newRay,  depth + 1,ior_1) * reflectionIndex;
-		objectColor.clamp();
+		reflectionColor =  rayTracing(newRay,  depth + 1,ior_1) * reflectionIndex;
+		reflectionColor.clamp();
 	}
 
 	float refractionIndex = obj->GetMaterial()->GetRefrIndex();
-	if(refractionIndex > 0)
+	if (refractionIndex > 0)
 	{
 		float fromIor;
 		float toIor;
 		Vector actualHitPoint;
 		Vector invertedNormal = normal * -1;
 		actualHitPoint = hitPoint;
+		Vector mynormal = normal;
 		if(ray.direction * normal <=0)
 		{
 			fromIor = ior_1;
@@ -179,20 +188,22 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		{
 			fromIor = refractionIndex;
 			toIor = ior_1;
-			toIor = refractionIndex;
+			
 			actualHitPoint = hitPoint + normal * DISPLACE_BIAS * 2;
-		 
+			//flip normal if hitting object from the inside, without this light would just bounce arround inside the object
+			mynormal = invertedNormal;
+			invertedNormal = normal;
 
 		}
 
 
 		Vector invertedRayDirection = ray.direction * -1;
 		
-		float cosTetaI = invertedRayDirection * normal;
+		float cosTetaI = invertedRayDirection * mynormal;
 		float sinTetaI = sqrt(-1 * cosTetaI * cosTetaI + 1);
 		float sinTetaT = (toIor / fromIor) * sinTetaI;
 		float cosTetaT = sqrt(1- sinTetaT*sinTetaT);
-		Vector V = normal*(invertedRayDirection * normal)  - invertedRayDirection;
+		Vector V = mynormal *(invertedRayDirection * mynormal)  - invertedRayDirection;
 		
 		V.normalize();
 		Vector refractionDirection = V*sinTetaT +  invertedNormal*cosTetaT;
@@ -201,15 +212,21 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		float aux = (fromIor - toIor) / (fromIor + toIor);
 		float R0 = (aux * aux);
 		
-		float attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 5);//attenuation Has a problem! 
-		attenuation = abs(attenuation);
+		 attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 1);//attenuation Has a problem! 
+	//	attenuation = abs(attenuation);
 
 		Ray refractionRay =  Ray(actualHitPoint, refractionDirection);
-		Color refractedColor = rayTracing(refractionRay, depth+1, ior_1);
-		objectColor = objectColor * attenuation + refractedColor * (1-attenuation);
-		objectColor.clamp();
+		refractionColor = rayTracing(refractionRay, depth+1, ior_1);
+		refractionColor.clamp();
+		//objectColor = objectColor * attenuation + refractedColor * (1-attenuation);
+		//objectColor.clamp();
 	}
-	return objectColor;
+	else
+	{
+		return (objectColor + reflectionColor).clamp();
+	}
+	
+	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
 }
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
