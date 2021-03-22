@@ -11,8 +11,10 @@ Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 {
 	points[0] = P0; points[1] = P1; points[2] = P2;
 
+
 	/* Calculate the normal */
-	normal = Vector(0, 0, 0);
+	normal = (P2 - P1) % (P2 - P0);
+	normal = normal * -1;
 	normal.normalize();
 
 	//Calculate the Min and Max for bounding box
@@ -40,7 +42,29 @@ Vector Triangle::getNormal(Vector point)
 
 bool Triangle::intercepts(Ray& r, float& t ) {
 
-	return (false);
+	Vector p0p1 = points[1] - points[0];
+	Vector p0p2 = points[2] - points[0];
+	Vector projVec = r.direction % p0p2;
+	float det = p0p1 * projVec;
+
+	if (det < EPSILON) return false;
+	if (fabs(det) < EPSILON) return false;
+	
+
+	float invDet = 1 / det;
+
+	Vector tvec = r.origin - points[0];
+	float u = tvec * projVec * invDet;
+	if (u < 0 || u > 1) return false;
+
+	Vector qvec = tvec % p0p1;
+	float v = r.direction * qvec * invDet;
+	if (v < 0 || u + v > 1) return false;
+
+	t = p0p2 * qvec * invDet;
+
+	return true;
+
 }
 
 Plane::Plane(Vector& a_PN, float a_D)

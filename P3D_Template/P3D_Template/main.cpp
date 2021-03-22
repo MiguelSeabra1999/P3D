@@ -154,7 +154,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	float reflectionIndex = obj->GetMaterial()->GetReflection();
 	if (reflectionIndex > 0)
 	{
-		Vector myNormal;
+		Vector myNormal = normal;
 		if (ray.direction * normal > 0)
 
 		{
@@ -169,7 +169,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		reflectionColor.clamp();
 	}
 
-	float refractionIndex = obj->GetMaterial()->GetRefrIndex();
+	float refractionIndex = 0; // obj->GetMaterial()->GetRefrIndex(); //GetRefraIndex() might be wring
 	if (refractionIndex > 0)
 	{
 		float fromIor;
@@ -199,7 +199,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 
 		Vector invertedRayDirection = ray.direction * -1;
 		
-		float cosTetaI = invertedRayDirection * mynormal;
+		float cosTetaI = max(min(invertedRayDirection * mynormal, 1), -1); //check this
 		float sinTetaI = sqrt(-1 * cosTetaI * cosTetaI + 1);
 		float sinTetaT = (toIor / fromIor) * sinTetaI;
 		float cosTetaT = sqrt(1- sinTetaT*sinTetaT);
@@ -208,12 +208,17 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		V.normalize();
 		Vector refractionDirection = V*sinTetaT +  invertedNormal*cosTetaT;
 		refractionDirection.normalize();
-
+		
 		float aux = (fromIor - toIor) / (fromIor + toIor);
 		float R0 = (aux * aux);
 		
-		 attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 1);//attenuation Has a problem! 
+		 attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 5);//attenuation Has a problem! 
 	//	attenuation = abs(attenuation);
+		 /** /
+		 float eta = fromIor / toIor;
+		 float k = 1 - eta * eta * (1 - cosTetaI * cosTetaI);
+		 Vector Refraction = k < 0 ? Vector(0, 0, 0) : (invertedRayDirection * eta + mynormal * (eta * cosTetaI - sqrtf(k)));
+		 /**/
 
 		Ray refractionRay =  Ray(actualHitPoint, refractionDirection);
 		refractionColor = rayTracing(refractionRay, depth+1, ior_1);
@@ -751,7 +756,7 @@ void init_scene(void)
 
 		while (true) {
 			cout << "Input the Scene Name: ";
-			//cin >> input_user;
+			cin >> input_user;
 			
 			strcpy_s(scene_name, sizeof(scene_name), scenes_dir);
 			strcat_s(scene_name, sizeof(scene_name), input_user);
