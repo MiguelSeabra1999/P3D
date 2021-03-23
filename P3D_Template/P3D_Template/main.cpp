@@ -124,25 +124,33 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	Color objectColor = Color(0,0,0);
 	Color reflectionColor, refractionColor;
 	float attenuation;
-
+	Vector actualHitPoint;
 	Vector L,v,h;
-	for(int i = 0; i < lightN; i++)
+	float refractionIndex;
+	bool outsideIn = normal * ray.direction <= 0;
+
+
+	for (int i = 0; i < lightN; i++)
 	{
-		
+
 		currentLight = scene->getLight(i);
-		L = currentLight->position - hitPoint  ;
+		L = currentLight->position - hitPoint;
 		L.normalize();
-		if(L * normal > 0) //isInDirectView
-			if(!isPointObstructed(hitPoint, currentLight->position) && L * normal > 0)
+		if (L * normal > 0) //isInDirectView
+		{
+			
+			actualHitPoint = hitPoint + normal * DISPLACE_BIAS;
+			if (!isPointObstructed(actualHitPoint, currentLight->position) && L * normal > 0)
 			{
 				Vector shadingNormal = normal;
-				if(normal* ray.direction > 0)
+				if (!outsideIn)
 				{
-					shadingNormal = normal*-1;
+					shadingNormal = normal * -1;
 				}
-				lightSum += calculateColor(currentLight, obj, L, shadingNormal,ray.direction);
+				lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);
 			}
 
+		}
 	}
 
 
@@ -154,17 +162,24 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	float reflectionIndex = obj->GetMaterial()->GetReflection();
 	if (reflectionIndex > 0)
 	{
+		
+
 		Vector myNormal = normal;
-		/*if (ray.direction * normal > 0)
+		if (ray.direction * normal > 0)//inside to outside
 
 		{
 			myNormal = normal *-1;
-		}*/
+			actualHitPoint = hitPoint - normal * DISPLACE_BIAS;
+
+		}else
+		{
+			actualHitPoint = hitPoint + normal * DISPLACE_BIAS;
+		}
 		Vector inverseDirection = ray.direction * -1;
 		float newDirFloat = 2 * (inverseDirection * myNormal);
 		Vector newDir = myNormal * newDirFloat - inverseDirection;
 
-		Ray newRay = Ray(hitPoint , newDir);
+		Ray newRay = Ray(actualHitPoint, newDir);
 		reflectionColor =  rayTracing(newRay,  depth + 1,ior_1) ;//change ior to object ior
 		if (obj->GetMaterial()->GetTransmittance() == 0)
 		{
@@ -173,12 +188,12 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		reflectionColor.clamp();
 	}
 
-	float refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
+	refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
 	if (obj->GetMaterial()->GetTransmittance() > 0)
 	{
 		float fromIor;
 		float toIor;
-		Vector actualHitPoint;
+		
 		Vector invertedNormal = normal * -1;
 		actualHitPoint = hitPoint;
 		Vector mynormal = normal;
@@ -186,13 +201,13 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		toIor = refractionIndex;*/
 		if(ray.direction * normal <=0)
 		{
-			fromIor = 1;  ///???? am I suposed to do this
+			fromIor = ior_1;  ///???? am I suposed to do this
 			toIor = refractionIndex;
 			actualHitPoint = hitPoint + invertedNormal * DISPLACE_BIAS;///  parar de fazer displace *2
 		
 		}else
 		{
-			fromIor = refractionIndex;
+			fromIor = ior_1;
 			toIor = 1;
 			
 			actualHitPoint = hitPoint + normal * DISPLACE_BIAS ;
@@ -207,7 +222,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		
 		float cosTetaI = max(min(invertedRayDirection * mynormal, 1), -1); //check this 
 		float sinTetaI = sqrt(-1 * cosTetaI * cosTetaI + 1);
-		float sinTetaT = (toIor / fromIor) * sinTetaI;
+		float sinTetaT = (fromIor/ toIor ) * sinTetaI;
 		float cosTetaT = sqrt(1- sinTetaT*sinTetaT);
 
 
@@ -237,7 +252,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		 /**/
 
 		Ray refractionRay =  Ray(actualHitPoint, refractionDirection);
-		refractionColor = rayTracing(refractionRay, depth+1, ior_1);
+		refractionColor = rayTracing(refractionRay, depth+1, toIor);
 		refractionColor.clamp();
 		//objectColor = objectColor * attenuation + refractedColor * (1-attenuation);
 		//objectColor.clamp();
