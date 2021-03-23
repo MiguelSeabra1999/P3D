@@ -52,7 +52,7 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = false;
+bool drawModeEnabled = true;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
@@ -155,22 +155,26 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	if (reflectionIndex > 0)
 	{
 		Vector myNormal = normal;
-		if (ray.direction * normal > 0)
+		/*if (ray.direction * normal > 0)
 
 		{
 			myNormal = normal *-1;
-		}
+		}*/
 		Vector inverseDirection = ray.direction * -1;
 		float newDirFloat = 2 * (inverseDirection * myNormal);
 		Vector newDir = myNormal * newDirFloat - inverseDirection;
 
 		Ray newRay = Ray(hitPoint , newDir);
-		reflectionColor =  rayTracing(newRay,  depth + 1,ior_1) * reflectionIndex;
+		reflectionColor =  rayTracing(newRay,  depth + 1,ior_1) ;//change ior to object ior
+		if (obj->GetMaterial()->GetTransmittance() == 0)
+		{
+			reflectionColor = reflectionColor * reflectionIndex;
+		}
 		reflectionColor.clamp();
 	}
 
-	float refractionIndex = 0; // obj->GetMaterial()->GetRefrIndex(); //GetRefraIndex() might be wring
-	if (refractionIndex > 0)
+	float refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
+	if (obj->GetMaterial()->GetTransmittance() > 0)
 	{
 		float fromIor;
 		float toIor;
@@ -178,18 +182,20 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		Vector invertedNormal = normal * -1;
 		actualHitPoint = hitPoint;
 		Vector mynormal = normal;
+		/*fromIor = ior_1;
+		toIor = refractionIndex;*/
 		if(ray.direction * normal <=0)
 		{
-			fromIor = ior_1;
+			fromIor = 1;  ///???? am I suposed to do this
 			toIor = refractionIndex;
-			actualHitPoint = hitPoint + invertedNormal * DISPLACE_BIAS*2;
+			actualHitPoint = hitPoint + invertedNormal * DISPLACE_BIAS;///  parar de fazer displace *2
 		
 		}else
 		{
 			fromIor = refractionIndex;
-			toIor = ior_1;
+			toIor = 1;
 			
-			actualHitPoint = hitPoint + normal * DISPLACE_BIAS * 2;
+			actualHitPoint = hitPoint + normal * DISPLACE_BIAS ;
 			//flip normal if hitting object from the inside, without this light would just bounce arround inside the object
 			mynormal = invertedNormal;
 			invertedNormal = normal;
@@ -199,10 +205,12 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 
 		Vector invertedRayDirection = ray.direction * -1;
 		
-		float cosTetaI = max(min(invertedRayDirection * mynormal, 1), -1); //check this
+		float cosTetaI = max(min(invertedRayDirection * mynormal, 1), -1); //check this 
 		float sinTetaI = sqrt(-1 * cosTetaI * cosTetaI + 1);
 		float sinTetaT = (toIor / fromIor) * sinTetaI;
 		float cosTetaT = sqrt(1- sinTetaT*sinTetaT);
+
+
 		Vector V = mynormal *(invertedRayDirection * mynormal)  - invertedRayDirection;
 		
 		V.normalize();
@@ -211,8 +219,16 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		
 		float aux = (fromIor - toIor) / (fromIor + toIor);
 		float R0 = (aux * aux);
+
+		if (sinTetaI >= 1)///aqui cancelar refração, só reflraçao
+		{
+			attenuation = 1;
+
+		}else
+		{
+		 attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 5);
 		
-		 attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 5);//attenuation Has a problem! 
+		}
 	//	attenuation = abs(attenuation);
 		 /** /
 		 float eta = fromIor / toIor;
@@ -225,10 +241,11 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		refractionColor.clamp();
 		//objectColor = objectColor * attenuation + refractedColor * (1-attenuation);
 		//objectColor.clamp();
+		
 	}
 	else
 	{
-		return (objectColor + reflectionColor).clamp();
+		return (objectColor + reflectionColor /** obj->GetMaterial()->GetSpecular() */).clamp();//reflection color*specular
 	}
 	
 	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
@@ -264,10 +281,10 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	{
 		hitPoint = ray.origin + ray.direction * minDist;
 		normal = nearestObj->getNormal(hitPoint);
-		if(ray.direction * normal <= 0)
+	/*	if(ray.direction * normal <= 0)
 			hitPoint = hitPoint + normal * DISPLACE_BIAS;
 		else
-			hitPoint = hitPoint - normal * DISPLACE_BIAS;
+			hitPoint = hitPoint - normal * DISPLACE_BIAS;*/
 
 		
 		
