@@ -180,10 +180,12 @@ bool aaBox::intercepts(Ray& ray, float& t)
 {
 	double ox = ray.origin.x; double oy = ray.origin.y; double oz = ray.origin.z;
 	double dx = ray.direction.x; double dy = ray.direction.y; double dz = ray.direction.z;
+	double a = 1.0 / dx,  b = 1.0 / dy, c = 1.0 / dz;
+
 
 	/*double tx_min, ty_min, tz_min;
 	double tx_max, ty_max, tz_max;
-	
+
 	double a = 1.0 / dx;
 	if (a >= 0) {
 		tx_min = (min.x - ox) * a;
@@ -249,38 +251,44 @@ bool aaBox::intercepts(Ray& ray, float& t)
 
 	if (tE < tL && tL > 0) {
 		if (tE > 0) {
-			t = tL;
+			t = tL; //?
 			Normal = face_in;
 		}
 		else {
-			t = tL;
+			t = tL; //?
 			Normal = face_out;
 		}
 		return true;
 	}
-	
+
 	return false; */
 
 	float t_min = (min.x - ox) / dx;
 	float t_max = (max.x - ox) / dx;
 
-	if(t_min > t_max)
+	Vector face_in, face_out; // normals
+
+	if (t_min > t_max)
 		std::swap(t_min, t_max);
 
 	float ty_min = (min.x - oy) / dy;
 	float ty_max = (max.y - oy) / dy;
 
-	if(ty_min > ty_max)
+	if (ty_min > ty_max)
 		std::swap(ty_min, ty_max);
 
-	if((t_min > ty_max) || ty_min > t_max)
+	if ((t_min > ty_max) || ty_min > t_max)
 		return false;
 
-	if(ty_min > t_min)
+	if (ty_min > t_min) {
 		t_min = ty_max;
+		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+	}
 
-	if (ty_max < t_max)
+	if (ty_max < t_max) {
 		t_max = ty_max;
+		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, 0, -1);
+	}
 
 	float tz_min = (min.z - oz) / dz;
 	float tz_max = (max.z - oz) / dz;
@@ -291,16 +299,38 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	if ((t_min > tz_max) || (tz_min > t_max))
 		return false;
 
-	if (tz_min > t_min)
+	if (tz_min > t_min) {
 		t_min = tz_min;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
 
-	if (tz_max < t_max)
+	if (tz_max < t_max){
 		t_max = tz_max;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
 
+	//t = t_max;
 
-	t = t_max; // is wrong, sometimes is t_min + add normals
-
-	return true;
+	if (t_min < t_max && t_max > 0) {
+		if (t_min > 0) {
+			t = t_max; //t0 is tmin or what ?
+			Normal = face_in;
+		}
+		else {
+			t = t_max;
+			Normal = face_out;
+		}
+		return true;
+	}
+	else {
+		return false;
+	}
+	/*if (t_min > 0) 
+		Normal = face_out;
+	else
+		Normal = face_in;
+	
+	return true;*/
 }
 
 Vector aaBox::getNormal(Vector point)
