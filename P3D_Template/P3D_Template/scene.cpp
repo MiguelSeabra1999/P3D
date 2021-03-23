@@ -169,6 +169,7 @@ aaBox::aaBox(Vector& minPoint, Vector& maxPoint) //Axis aligned Box: another geo
 {
 	this->min = minPoint;
 	this->max = maxPoint;
+	//this->Normal = ???;
 }
 
 AABB aaBox::GetBoundingBox() {
@@ -180,9 +181,9 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	double ox = ray.origin.x; double oy = ray.origin.y; double oz = ray.origin.z;
 	double dx = ray.direction.x; double dy = ray.direction.y; double dz = ray.direction.z;
 
-	double tx_min, ty_min, tz_min;
+	/*double tx_min, ty_min, tz_min;
 	double tx_max, ty_max, tz_max;
-
+	
 	double a = 1.0 / dx;
 	if (a >= 0) {
 		tx_min = (min.x - ox) * a;
@@ -213,31 +214,93 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tz_max = (min.z - oz) * c;
 	}
 
-	double t0, t1;
+	double tE, tL;
+	Vector face_in, face_out; // normals
 
-	// find largest entering t value
+	// find largest tE, entering t value
 
-	if (tx_min > ty_min)
-		t0 = tx_min;
-	else
-		t0 = ty_min;
+	if (tx_min > ty_min) {
+		tE = tx_min;
+		face_in = (a >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
+	}
+	else {
+		tE = ty_min;
+		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+	}
+	if (tz_min > tE) { //?
+		tE = tz_min;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
+	// find smallest exiting tL, leaving t value
 
-	if (tz_min > t0)
-		t0 = tz_min;
+	if (tx_max < ty_max) {
+		tL = tx_max;
+		face_out = (a >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
+	}
+	else {
+		tL = ty_max;
+		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, 0, -1);
+	}
 
-	// find smallest exiting t value
+	if (tz_max < tL) { //???
+		tL = tz_max;
+		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+	}
 
-	if (tx_max < ty_max)
-		t1 = tx_max;
-	else
-		t1 = ty_max;
+	if (tE < tL && tL > 0) {
+		if (tE > 0) {
+			t = tL;
+			Normal = face_in;
+		}
+		else {
+			t = tL;
+			Normal = face_out;
+		}
+		return true;
+	}
+	
+	return false; */
 
-	if (tz_max < t1)
-		t1 = tz_max;
+	float t_min = (min.x - ox) / dx;
+	float t_max = (max.x - ox) / dx;
 
-	bool hit(t0 < t1&& t1 > 0.0001);
-	t = t1;
-	return hit;
+	if(t_min > t_max)
+		std::swap(t_min, t_max);
+
+	float ty_min = (min.x - oy) / dy;
+	float ty_max = (max.y - oy) / dy;
+
+	if(ty_min > ty_max)
+		std::swap(ty_min, ty_max);
+
+	if((t_min > ty_max) || ty_min > t_max)
+		return false;
+
+	if(ty_min > t_min)
+		t_min = ty_max;
+
+	if (ty_max < t_max)
+		t_max = ty_max;
+
+	float tz_min = (min.z - oz) / dz;
+	float tz_max = (max.z - oz) / dz;
+
+	if (tz_min > tz_max)
+		swap(tz_min, tz_max);
+
+	if ((t_min > tz_max) || (tz_min > t_max))
+		return false;
+
+	if (tz_min > t_min)
+		t_min = tz_min;
+
+	if (tz_max < t_max)
+		t_max = tz_max;
+
+
+	t = t_max; // is wrong, sometimes is t_min + add normals
+
+	return true;
 }
 
 Vector aaBox::getNormal(Vector point)
