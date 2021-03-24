@@ -180,10 +180,10 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	double ox = ray.origin.x; double oy = ray.origin.y; double oz = ray.origin.z;
 	double dx = ray.direction.x; double dy = ray.direction.y; double dz = ray.direction.z;
 
-	//double tx_min, ty_min, tz_min;
-	//double tx_max, ty_max, tz_max;
+	double tx_min, ty_min, tz_min;
+	double tx_max, ty_max, tz_max;
 
-	/*double a = 1.0 / dx;
+	double a = 1.0 / dx;
 	if (a >= 0) {
 		tx_min = (min.x - ox) * a;
 		tx_max = (max.x - ox) * a;
@@ -226,7 +226,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tE = ty_min;
 		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
 	}
-	if (tz_min > min.z) { //? help 
+	if (tz_min > tE) { //? help 
 		tE = tz_min;
 		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
@@ -238,17 +238,17 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	}
 	else {
 		tL = ty_max;
-		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, 0, -1);
+		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
 	}
 
-	if (tz_max < max.z) { //??? help what is 
+	if (tz_max < tL) { //??? help what is 
 		tL = tz_max;
-		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
 	}
-
+	cout << tE << " " << tL << "\n";
 	if (tE < tL && tL > 0) {
 		if (tE > 0) {
-			t = min.z;
+			t = tE;
 			Normal = face_in;
 		}
 		else {
@@ -258,9 +258,9 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		return true;
 	}
 
-	return false; */
+	return false; 
 
-	float t_min = (min.x - ox) / dx;
+	/*float t_min = (min.x - ox) / dx;
 	float t_max = (max.x - ox) / dx;
 
 	if (t_min > t_max)
@@ -305,7 +305,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 			return false;
 	}
 
-	return true;
+	return true;*/
 }
 
 Vector aaBox::getNormal(Vector point)
