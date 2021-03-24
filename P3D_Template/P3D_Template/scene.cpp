@@ -169,7 +169,6 @@ aaBox::aaBox(Vector& minPoint, Vector& maxPoint) //Axis aligned Box: another geo
 {
 	this->min = minPoint;
 	this->max = maxPoint;
-	//this->Normal = ???;
 }
 
 AABB aaBox::GetBoundingBox() {
@@ -180,13 +179,11 @@ bool aaBox::intercepts(Ray& ray, float& t)
 {
 	double ox = ray.origin.x; double oy = ray.origin.y; double oz = ray.origin.z;
 	double dx = ray.direction.x; double dy = ray.direction.y; double dz = ray.direction.z;
-	double a = 1.0 / dx,  b = 1.0 / dy, c = 1.0 / dz;
 
+	//double tx_min, ty_min, tz_min;
+	//double tx_max, ty_max, tz_max;
 
-	/*double tx_min, ty_min, tz_min;
-	double tx_max, ty_max, tz_max;
-
-	double a = 1.0 / dx;
+	/*double a = 1.0 / dx;
 	if (a >= 0) {
 		tx_min = (min.x - ox) * a;
 		tx_max = (max.x - ox) * a;
@@ -229,7 +226,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tE = ty_min;
 		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
 	}
-	if (tz_min > tE) { //?
+	if (tz_min > min.z) { //? help 
 		tE = tz_min;
 		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
@@ -244,18 +241,18 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, 0, -1);
 	}
 
-	if (tz_max < tL) { //???
+	if (tz_max < max.z) { //??? help what is 
 		tL = tz_max;
 		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
 
 	if (tE < tL && tL > 0) {
 		if (tE > 0) {
-			t = tL; //?
+			t = min.z;
 			Normal = face_in;
 		}
 		else {
-			t = tL; //?
+			t = tL;
 			Normal = face_out;
 		}
 		return true;
@@ -265,8 +262,6 @@ bool aaBox::intercepts(Ray& ray, float& t)
 
 	float t_min = (min.x - ox) / dx;
 	float t_max = (max.x - ox) / dx;
-
-	Vector face_in, face_out; // normals
 
 	if (t_min > t_max)
 		std::swap(t_min, t_max);
@@ -280,15 +275,11 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	if ((t_min > ty_max) || ty_min > t_max)
 		return false;
 
-	if (ty_min > t_min) {
+	if (ty_min > t_min)
 		t_min = ty_max;
-		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
-	}
 
-	if (ty_max < t_max) {
+	if (ty_max < t_max)
 		t_max = ty_max;
-		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, 0, -1);
-	}
 
 	float tz_min = (min.z - oz) / dz;
 	float tz_max = (max.z - oz) / dz;
@@ -299,38 +290,22 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	if ((t_min > tz_max) || (tz_min > t_max))
 		return false;
 
-	if (tz_min > t_min) {
+	if (tz_min > t_min)
 		t_min = tz_min;
-		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
-	}
 
 	if (tz_max < t_max){
 		t_max = tz_max;
-		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
-
-	//t = t_max;
-
-	if (t_min < t_max && t_max > 0) {
-		if (t_min > 0) {
-			t = t_max; //t0 is tmin or what ?
-			Normal = face_in;
-		}
-		else {
-			t = t_max;
-			Normal = face_out;
-		}
-		return true;
-	}
-	else {
-		return false;
-	}
-	/*if (t_min > 0) 
-		Normal = face_out;
-	else
-		Normal = face_in;
 	
-	return true;*/
+	t = t_min;
+
+	if (t < 0) {
+		t = t_max;
+		if (t < 0) 
+			return false;
+	}
+
+	return true;
 }
 
 Vector aaBox::getNormal(Vector point)
