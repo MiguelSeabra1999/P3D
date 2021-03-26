@@ -245,8 +245,8 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tL = tz_max;
 		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
 	}
-	cout << tE << " " << tL << "\n";
-	if (tE < tL && tL > 0) {
+	
+	if (tE < tL) {
 		if (tE > 0) {
 			t = tE;
 			Normal = face_in;
@@ -254,6 +254,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		else {
 			t = tL;
 			Normal = face_out;
+
 		}
 		return true;
 	}
