@@ -31,6 +31,7 @@
 
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.0001
+#define GRID_SIDE 4
 
 unsigned int FrameCount = 0;
 
@@ -52,7 +53,7 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = true;
+bool drawModeEnabled = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
@@ -510,21 +511,30 @@ void renderScene()
 		glClear(GL_COLOR_BUFFER_BIT);
 		scene->GetCamera()->SetEye(Vector(camX, camY, camZ));  //Camera motion
 	}
-	
+	set_rand_seed(42);
 	for (int y = 0; y < RES_Y; y++)
 	{
 		for (int x = 0; x < RES_X; x++)
 		{
-			Color color; 
+			Color color = Color(0,0,0); 
 
 			Vector pixel;  //viewport coordinates
-			pixel.x = x + 0.5f;  
-			pixel.y = y + 0.5f;
+			pixel.x = x;  //+0.5f
+			pixel.y = y; //+0.5f
 
 			/*YOUR 2 FUNTIONS:*/
-			Ray ray = scene->GetCamera()->PrimaryRay(pixel);
-			color = rayTracing(ray, 1, 1.0).clamp();
+			for (int p = 0; p < GRID_SIDE; p++)
+				for (int q = 0; q < GRID_SIDE; q++) {
+					float epsilon = rand_float();
+					Vector pixelSample;  //viewport coordinates
+					pixelSample.x = x + (p + epsilon) / GRID_SIDE;
+					pixelSample.y = y + (q + epsilon) / GRID_SIDE;
 
+					Ray ray = scene->GetCamera()->PrimaryRay(pixelSample);
+					color = color + rayTracing(ray, 1, 1.0);
+				
+				} 
+			color= color * (1.f/(GRID_SIDE * GRID_SIDE));
 
 			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
 
