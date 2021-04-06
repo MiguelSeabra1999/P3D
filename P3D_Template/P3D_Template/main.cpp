@@ -81,6 +81,9 @@ int WindowHandle = 0;
 
 Color rayTracing(Ray ray, int depth, float ior_1);
 
+void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
+void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
+
 bool isPointObstructed(Vector fromPoint, Vector toPoint)
 {
 	int objectN = scene->getNumObjects();
@@ -141,15 +144,16 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		{
 			
 			actualHitPoint = hitPoint + normal * DISPLACE_BIAS;
-			if (!isPointObstructed(actualHitPoint, currentLight->position) && L * normal > 0)
+
+			Vector shadingNormal = normal;
+			if (!outsideIn)
 			{
-				Vector shadingNormal = normal;
-				if (!outsideIn)
-				{
-					shadingNormal = normal * -1;
-				}
-				lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);
+				shadingNormal = normal * -1;
 			}
+
+			
+		//	antiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+			notAntiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
 
 		}
 	}
@@ -265,6 +269,34 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	}
 	
 	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
+}
+
+void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
+{
+	Vector sample = currentLight->position + Vector(0, 1, 0) * rand_float() + Vector(1, 0, 0) * rand_float();
+
+	if (!isPointObstructed(actualHitPoint, sample) && L * normal > 0)
+	{
+		lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);
+	}
+}
+
+void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
+{
+	Vector sample = currentLight->position + Vector(0, 1, 0) * rand_float() + Vector(1, 0, 0) * rand_float();
+	Color originalColor = currentLight->color;
+	currentLight->color = currentLight->color * (1/(GRID_SIDE * GRID_SIDE));
+	for(int x = 0; x < GRID_SIDE; x++)
+		for (int y = 0; y < GRID_SIDE; y++)
+		{
+			sample = currentLight->position + Vector(0, 1, 0) * x/GRID_SIDE + Vector(1, 0, 0) * y/ GRID_SIDE;
+			if (!isPointObstructed(actualHitPoint, sample) && L * normal > 0)
+			{
+				lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);
+			}
+		}
+
+	currentLight->color = originalColor;
 }
 
 Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of medium 1 where the ray is travelling
