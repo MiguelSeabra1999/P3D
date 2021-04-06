@@ -55,6 +55,9 @@ char s[32];
 //Enable OpenGL drawing.  
 bool drawModeEnabled = false;
 
+//Enable antialiasing
+bool withAntialiasing = true;
+
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
@@ -551,22 +554,29 @@ void renderScene()
 			Color color = Color(0,0,0); 
 
 			Vector pixel;  //viewport coordinates
-			pixel.x = x;  //+0.5f
-			pixel.y = y; //+0.5f
+			pixel.x = x + 0.5f;
+			pixel.y = y + 0.5f;
 
 			/*YOUR 2 FUNTIONS:*/
-			for (int p = 0; p < GRID_SIDE; p++)
-				for (int q = 0; q < GRID_SIDE; q++) {
-					float epsilon = rand_float();
-					Vector pixelSample;  //viewport coordinates
-					pixelSample.x = x + (p + epsilon) / GRID_SIDE;
-					pixelSample.y = y + (q + epsilon) / GRID_SIDE;
+			if (withAntialiasing) {
+				for (int p = 0; p < GRID_SIDE; p++)
+					for (int q = 0; q < GRID_SIDE; q++) {
+						float epsilon = rand_float();
+						Vector pixelSample;  //viewport coordinates
+						pixelSample.x = x + (p + epsilon) / GRID_SIDE;
+						pixelSample.y = y + (q + epsilon) / GRID_SIDE;
 
-					Ray ray = scene->GetCamera()->PrimaryRay(pixelSample);
-					color = color + rayTracing(ray, 1, 1.0);
-				
-				} 
-			color= color * (1.f/(GRID_SIDE * GRID_SIDE));
+						Ray ray = scene->GetCamera()->PrimaryRay(pixelSample);
+						color = color + rayTracing(ray, 1, 1.0);
+
+					}
+				color = color * (1.f / (GRID_SIDE * GRID_SIDE));
+			}
+
+			else {
+				Ray ray = scene->GetCamera()->PrimaryRay(pixel);
+				color = color + rayTracing(ray, 1, 1.0).clamp();
+			}
 
 			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
 
