@@ -534,16 +534,17 @@ void renderScene()
 						pixelSample.x = x + (p + epsilon) / GRID_SIDE;
 						pixelSample.y = y + (q + epsilon) / GRID_SIDE;
 
-						Ray ray = scene->GetCamera()->PrimaryRay(pixelSample);
+						Ray ray = scene->GetCamera()->PrimaryRay(sample_unit_disk() * scene->GetCamera()->GetAperture(), pixelSample);
 						color = color + rayTracing(ray, 1, 1.0);
 
-					}
+					} 
 				color = color * (1.f / (GRID_SIDE * GRID_SIDE));
-			}
+			} 
 
 			else {
 				Ray ray = scene->GetCamera()->PrimaryRay(pixel);
 				color = color + rayTracing(ray, 1, 1.0).clamp();
+
 			}
 
 			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template

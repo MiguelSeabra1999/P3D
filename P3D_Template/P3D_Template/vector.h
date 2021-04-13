@@ -14,6 +14,9 @@ public:
 	Vector(const Vector& v);
 
 	float length();
+
+	float getAxisValue(int axis);
+
 	Vector&	normalize();
 	Vector operator=(const Vector& v);
 	Vector operator+( const Vector& v );
