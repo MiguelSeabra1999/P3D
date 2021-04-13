@@ -53,10 +53,11 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = true;
+bool drawModeEnabled = false;
 
 //Enable antialiasing
-bool withAntialiasing = false;
+bool withAntialiasing = true;
+bool softShadows = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
@@ -86,7 +87,7 @@ Color rayTracing(Ray ray, int depth, float ior_1);
 
 void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
-void softShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
+void hardShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 
 bool isPointObstructed(Vector fromPoint, Vector toPoint)
 {
@@ -154,10 +155,15 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 			{
 				shadingNormal = normal * -1;
 			}
-
-			softShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
-			//antiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
-		//	notAntiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+			if(!softShadows)
+			hardShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+			else
+			{
+				if(withAntialiasing)
+					antiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+				else
+					notAntiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+			}
 
 		}
 	}
@@ -275,7 +281,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
 }
 
-void softShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
+void hardShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
 {
 	Vector sample = currentLight->position;
 
