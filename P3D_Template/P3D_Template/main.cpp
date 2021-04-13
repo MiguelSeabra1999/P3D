@@ -31,8 +31,8 @@
 
 #define MAX_DEPTH 8
 #define DISPLACE_BIAS 0.0001
-#define GRID_SIDE 2
-#define SPP 256 // change this 
+
+#define SPP 4 // change this 
 unsigned int FrameCount = 0;
 
 // Current Camera Position
@@ -60,6 +60,7 @@ bool withAntialiasing = true;
 bool softShadows = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
+float sppSquared = sqrt(SPP);
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
 float *colors;
@@ -305,11 +306,11 @@ void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vect
 {
 	Vector sample = currentLight->position + Vector(0, 1, 0) * rand_float() + Vector(1, 0, 0) * rand_float();
 	Color originalColor = currentLight->color;
-	currentLight->color = currentLight->color * (1.0f/(GRID_SIDE * GRID_SIDE));
-	for(int x = 0; x < GRID_SIDE; x++)
-		for (int y = 0; y < GRID_SIDE; y++)
+	currentLight->color = currentLight->color * (1.0f/(sppSquared * sppSquared));
+	for(int x = 0; x < sppSquared; x++)
+		for (int y = 0; y < sppSquared; y++)
 		{
-			sample = currentLight->position + Vector(0, 1, 0) * ((x + rand_float())/GRID_SIDE) + Vector(1, 0, 0) * ((y + rand_float()) / GRID_SIDE);
+			sample = currentLight->position + Vector(0, 1, 0) * ((x + rand_float())/sppSquared) + Vector(1, 0, 0) * ((y + rand_float()) / sppSquared);
 			if (!isPointObstructed(actualHitPoint, sample) && L * normal > 0)
 			{
 				lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);
@@ -576,12 +577,12 @@ void renderScene()
 
 			/*YOUR 2 FUNTIONS:*/
 			if (withAntialiasing) {
-				for (int p = 0; p < GRID_SIDE; p++)
-					for (int q = 0; q < GRID_SIDE; q++) {
+				for (int p = 0; p < sppSquared; p++)
+					for (int q = 0; q < sppSquared; q++) {
 						float epsilon = rand_float();
 						Vector pixelSample;  //viewport coordinates
-						pixelSample.x = x + (p + epsilon) / GRID_SIDE;
-						pixelSample.y = y + (q + epsilon) / GRID_SIDE;
+						pixelSample.x = x + (p + epsilon) / sppSquared;
+						pixelSample.y = y + (q + epsilon) / sppSquared;
 						
 						if(scene->GetCamera()->GetAperture() > 0)
 						{
@@ -596,7 +597,7 @@ void renderScene()
 						}
 
 					} 
-				color = color * (1.f / (GRID_SIDE * GRID_SIDE));
+				color = color * (1.f / SPP);
 			} 
 
 			else {
