@@ -17,7 +17,7 @@ public:
 	void addObject(Object* o);
 	Object* getObject(unsigned int index);
 
-	void Build(void);   // set up grid cells
+	void Build(std::vector<Object*>& objs);   // set up grid cells
 
 	bool Traverse(Ray& ray, Object **hitobject, Vector& hitpoint);  //(const Ray& ray, double& tmin, ShadeRec& sr)
 	bool Traverse(Ray& ray);  //Traverse for shadow ray
