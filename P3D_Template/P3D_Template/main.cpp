@@ -29,10 +29,10 @@
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
 
-#define MAX_DEPTH 4
+#define MAX_DEPTH 8
 #define DISPLACE_BIAS 0.0001
-#define GRID_SIDE 4
-
+#define GRID_SIDE 8
+#define SPP 256 // change this 
 unsigned int FrameCount = 0;
 
 // Current Camera Position
@@ -53,10 +53,10 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = false;
+bool drawModeEnabled = true;
 
 //Enable antialiasing
-bool withAntialiasing = true;
+bool withAntialiasing = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 
@@ -86,6 +86,7 @@ Color rayTracing(Ray ray, int depth, float ior_1);
 
 void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
+void softShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 
 bool isPointObstructed(Vector fromPoint, Vector toPoint)
 {
@@ -154,9 +155,9 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 				shadingNormal = normal * -1;
 			}
 
-			
-		//	antiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
-			notAntiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+			softShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+			//antiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
+		//	notAntiAliasedSoftShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
 
 		}
 	}
@@ -191,13 +192,13 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		reflectionColor =  rayTracing(newRay,  depth + 1,ior_1) ;//change ior to object ior
 		if (obj->GetMaterial()->GetTransmittance() == 0)
 		{
-			reflectionColor = reflectionColor * reflectionIndex;
+			reflectionColor = reflectionColor * reflectionIndex * obj->GetMaterial()->GetSpecColor();
 		}
 		reflectionColor.clamp();
 	}
 
 	refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
-	if (obj->GetMaterial()->GetTransmittance() > 0)
+	if (false && obj->GetMaterial()->GetTransmittance() > 0)
 	{
 		float fromIor;
 		float toIor;
@@ -274,6 +275,16 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
 }
 
+void softShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
+{
+	Vector sample = currentLight->position;
+
+	if (!isPointObstructed(actualHitPoint, sample) && L * normal > 0)
+	{
+		lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);
+	}
+}
+
 void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
 {
 	Vector sample = currentLight->position + Vector(0, 1, 0) * rand_float() + Vector(1, 0, 0) * rand_float();
@@ -288,11 +299,11 @@ void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vect
 {
 	Vector sample = currentLight->position + Vector(0, 1, 0) * rand_float() + Vector(1, 0, 0) * rand_float();
 	Color originalColor = currentLight->color;
-	currentLight->color = currentLight->color * (1/(GRID_SIDE * GRID_SIDE));
+	currentLight->color = currentLight->color * (1.0f/(GRID_SIDE * GRID_SIDE));
 	for(int x = 0; x < GRID_SIDE; x++)
 		for (int y = 0; y < GRID_SIDE; y++)
 		{
-			sample = currentLight->position + Vector(0, 1, 0) * x/GRID_SIDE + Vector(1, 0, 0) * y/ GRID_SIDE;
+			sample = currentLight->position + Vector(0, 1, 0) * ((x + rand_float())/GRID_SIDE) + Vector(1, 0, 0) * ((y + rand_float()) / GRID_SIDE);
 			if (!isPointObstructed(actualHitPoint, sample) && L * normal > 0)
 			{
 				lightSum += calculateColor(currentLight, obj, L, shadingNormal, ray.direction);

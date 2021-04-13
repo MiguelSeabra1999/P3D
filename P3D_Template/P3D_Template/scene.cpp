@@ -183,7 +183,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 	double tx_min, ty_min, tz_min;
 	double tx_max, ty_max, tz_max;
 
-	double a = 1.0 / dx;
+	double a = 1.0f / dx;
 	if (a >= 0) {
 		tx_min = (min.x - ox) * a;
 		tx_max = (max.x - ox) * a;
@@ -193,7 +193,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tx_max = (min.x - ox) * a;
 	}
 
-	double b = 1.0 / dy;
+	double b = 1.0f / dy;
 	if (b >= 0) {
 		ty_min = (min.y - oy) * b;
 		ty_max = (max.y - oy) * b;
@@ -203,7 +203,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		ty_max = (min.y - oy) * b;
 	}
 
-	double c = 1.0 / dz;
+	double c = 1.0f / dz;
 	if (c >= 0) {
 		tz_min = (min.z - oz) * c;
 		tz_max = (max.z - oz) * c;
@@ -213,41 +213,41 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		tz_max = (min.z - oz) * c;
 	}
 
-	double tE, tL;
+	double tE, tL;//TE maior dos max 
 	Vector face_in, face_out; // normals
 
 	// find largest tE, entering t value
 
 	if (tx_min > ty_min) {
 		tE = tx_min;
-		face_in = (a >= 0.0) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
+		face_in = (a >= 0.0f) ? Vector(-1, 0, 0) : Vector(1, 0, 0);
 	}
 	else {
 		tE = ty_min;
-		face_in = (b >= 0.0) ? Vector(0, -1, 0) : Vector(0, 1, 0);
+		face_in = (b >= 0.0f) ? Vector(0, -1, 0) : Vector(0, 1, 0);
 	}
 	if (tz_min > tE) { //? help 
 		tE = tz_min;
-		face_in = (c >= 0.0) ? Vector(0, 0, -1) : Vector(0, 0, 1);
+		face_in = (c >= 0.0f) ? Vector(0, 0, -1) : Vector(0, 0, 1);
 	}
 	// find smallest exiting tL, leaving t value
 
 	if (tx_max < ty_max) {
 		tL = tx_max;
-		face_out = (a >= 0.0) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
+		face_out = (a >= 0.0f) ? Vector(1, 0, 0) : Vector(-1, 0, 0);
 	}
 	else {
 		tL = ty_max;
-		face_out = (b >= 0.0) ? Vector(0, 1, 0) : Vector(0, -1, 0);
+		face_out = (b >= 0.0f) ? Vector(0, 1, 0) : Vector(0, -1, 0);
 	}
 
 	if (tz_max < tL) { //??? help what is 
 		tL = tz_max;
-		face_out = (c >= 0.0) ? Vector(0, 0, 1) : Vector(0, 0, -1);
+		face_out = (c >= 0.0f) ? Vector(0, 0, 1) : Vector(0, 0, -1);
 	}
 	
-	if (tE < tL) {
-		if (tE > 0) {
+	if (tE < tL && tL > 0.0f) {
+		if (tE > 0.f) {
 			t = tE;
 			Normal = face_in;
 		}
@@ -311,9 +311,10 @@ bool aaBox::intercepts(Ray& ray, float& t)
 
 Vector aaBox::getNormal(Vector point)
 {
+
+
 	return Normal;
 }
-
 Scene::Scene()
 {}
 
