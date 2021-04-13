@@ -119,7 +119,7 @@ public:
 		p.x = pixel_sample.x * focal_ratio;
 		p.y = pixel_sample.y * focal_ratio;
 		float f = plane_dist * focal_ratio;//focal_ratio * (-1 * pixel_sample.z);
-
+		
 		
 
 		Vector ray_dir = u *(p.x - lens_sample.x)+ v * (p.y - lens_sample.y)- n * f;
