@@ -35,6 +35,11 @@
 #define SPP 256 // change this 
 unsigned int FrameCount = 0;
 
+// Accelerators
+typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
+Accelerator Accel_Struct = GRID_ACC;
+Grid* grid_ptr;
+
 // Current Camera Position
 float camX, camY, camZ;
 
@@ -84,6 +89,8 @@ int RES_X, RES_Y;
 int WindowHandle = 0;
 
 Color rayTracing(Ray ray, int depth, float ior_1);
+
+void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, float& minDist, Object*& nearestObj);
 
 void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
@@ -328,26 +335,22 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	Object* nearestObj = NULL;
 	Vector normal, hitPoint;
 	float minDist = numeric_limits<float>::max();
-	for(int i = 0 ; i < objectsN; i++)
+	
+	
+	if (Accel_Struct == NONE)
 	{
-		currentObj = scene->getObject(i);
-		if(currentObj->intercepts(ray, dist))
-		{
-			
-			if(dist < minDist)
-			{
-		
-				minDist = dist;
-				nearestObj = currentObj;
-			}
-
-		}
+		RayTraversal(objectsN, currentObj, ray, dist, minDist, nearestObj);
+		hitPoint = ray.origin + ray.direction * minDist;
 	}
+	else if (Accel_Struct == GRID_ACC)
+	{
+		grid_ptr->Traverse(ray, &nearestObj, hitPoint);
+	}
+
 
 
 	if(nearestObj != NULL)
 	{
-		hitPoint = ray.origin + ray.direction * minDist;
 		normal = nearestObj->getNormal(hitPoint);
 	/*	if(ray.direction * normal <= 0)
 			hitPoint = hitPoint + normal * DISPLACE_BIAS;
@@ -361,6 +364,25 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	}
 
 	return scene->GetBackgroundColor();
+}
+
+void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, float& minDist, Object*& nearestObj)
+{
+	for (int i = 0; i < objectsN; i++)
+	{
+		currentObj = scene->getObject(i);
+		if (currentObj->intercepts(ray, dist))
+		{
+
+			if (dist < minDist)
+			{
+
+				minDist = dist;
+				nearestObj = currentObj;
+			}
+
+		}
+	}
 }
 
 
@@ -890,6 +912,18 @@ void init_scene(void)
 	RES_Y = scene->GetCamera()->GetResY();
 	printf("\nResolutionX = %d  ResolutionY= %d.\n", RES_X, RES_Y);
 
+	//GRID ACCELERATOR
+	if (Accel_Struct == GRID_ACC) {
+		grid_ptr = new Grid();
+		std::vector<Object*> objs;
+		int num_objects = scene->getNumObjects();
+
+		for (int o = 0; o < num_objects; o++) {
+			objs.push_back(scene->getObject(o));
+		}
+		grid_ptr->Build(objs);
+		printf("Grid built.\n\n");
+	}
 	// Pixel buffer to be used in the Save Image function
 	img_Data = (uint8_t*)malloc(3 * RES_X*RES_Y * sizeof(uint8_t));
 	if (img_Data == NULL) exit(1);
