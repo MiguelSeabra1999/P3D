@@ -29,10 +29,10 @@
 #define VERTEX_COORD_ATTRIB 0
 #define COLOR_ATTRIB 1
 
-#define MAX_DEPTH 8
+#define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 32
+#define SPP 4
 unsigned int FrameCount = 0;
 
 // Accelerators
