@@ -31,7 +31,7 @@
 
 #define MAX_DEPTH 8
 #define DISPLACE_BIAS 0.0001
-#define GRID_SIDE 8
+#define GRID_SIDE 2
 #define SPP 256 // change this 
 unsigned int FrameCount = 0;
 
@@ -53,7 +53,7 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = false;
+bool drawModeEnabled = true;
 
 //Enable antialiasing
 bool withAntialiasing = true;
@@ -582,9 +582,18 @@ void renderScene()
 						Vector pixelSample;  //viewport coordinates
 						pixelSample.x = x + (p + epsilon) / GRID_SIDE;
 						pixelSample.y = y + (q + epsilon) / GRID_SIDE;
+						
+						if(scene->GetCamera()->GetAperture() > 0)
+						{
 
-						Ray ray = scene->GetCamera()->PrimaryRay(sample_unit_disk() * scene->GetCamera()->GetAperture(), pixelSample);
-						color = color + rayTracing(ray, 1, 1.0);
+							Ray ray = scene->GetCamera()->PrimaryRay(sample_unit_disk() * scene->GetCamera()->GetAperture(), pixelSample);
+							color = color + rayTracing(ray, 1, 1.0);
+						}
+						else
+						{
+							Ray ray = scene->GetCamera()->PrimaryRay(pixelSample);
+							color = color + rayTracing(ray, 1, 1.0);
+						}
 
 					} 
 				color = color * (1.f / (GRID_SIDE * GRID_SIDE));

@@ -81,9 +81,20 @@ public:
 
 	Ray PrimaryRay(const Vector& lens_sample, const Vector& pixel_sample) // DOF: Rays cast from  a thin lens sample to a pixel sample
 	{
-		cout << lens_sample.x;
+	
 		Vector eye_offset = eye + u * lens_sample.x + v * lens_sample.y;
-		Vector ray_dir = GetRayDirection(pixel_sample, lens_sample);
+
+		float viewportX = pixel_sample.x / res_x - 0.5;
+		float viewportY = pixel_sample.y / res_y - 0.5f;
+
+		viewportX = w * viewportX;
+		viewportY = h * viewportY;
+
+		Vector xComponent = u * viewportX;
+		Vector yComponent = v * viewportY;
+		Vector pixel_sample_world = xComponent + yComponent;
+
+		Vector ray_dir = GetRayDirection(pixel_sample_world, lens_sample);
 		return Ray(eye_offset, ray_dir);
 	}
 	Vector GetRayDirection(const Vector& pixel_sample)
@@ -103,11 +114,15 @@ public:
 
 	Vector GetRayDirection(const Vector& pixel_sample, const Vector& lens_sample) {
 		Vector p;
+
+
 		p.x = pixel_sample.x * focal_ratio;
 		p.y = pixel_sample.y * focal_ratio;
-		float f = focal_ratio * (-1 * pixel_sample.z);
+		float f = plane_dist * focal_ratio;//focal_ratio * (-1 * pixel_sample.z);
 
-		Vector ray_dir = u * (p.x - lens_sample.x)+ v * (p.y - lens_sample.y)- n * f;
+		
+
+		Vector ray_dir = u *(p.x - lens_sample.x)+ v * (p.y - lens_sample.y)- n * f;
 		return ray_dir.normalize(); 
 	}
 
