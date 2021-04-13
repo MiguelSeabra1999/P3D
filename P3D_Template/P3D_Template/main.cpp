@@ -30,9 +30,9 @@
 #define COLOR_ATTRIB 1
 
 #define MAX_DEPTH 8
-#define DISPLACE_BIAS 0.0001
+#define DISPLACE_BIAS 0.001
 
-#define SPP 4 // change this 
+#define SPP 32
 unsigned int FrameCount = 0;
 
 // Accelerators
@@ -58,11 +58,11 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = true;
+bool drawModeEnabled = false;
 
 //Enable antialiasing
 bool withAntialiasing = true;
-bool softShadows = false;
+bool softShadows = true;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);

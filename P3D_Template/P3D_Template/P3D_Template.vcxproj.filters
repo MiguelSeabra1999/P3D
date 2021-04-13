@@ -53,9 +53,6 @@
     <ClInclude Include="color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="grid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="maths.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -80,10 +77,10 @@
     <None Include="P3D_Scenes\balls_high.p3f">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="P3D_Scenes\balls_low.p3f">
+    <None Include="P3D_Scenes\balls_medium.p3f">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="P3D_Scenes\balls_medium.p3f">
+    <None Include="P3D_Scenes\balls_low.p3f">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

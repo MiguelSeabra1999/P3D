@@ -84,43 +84,38 @@ public:
 	
 		Vector eye_offset = eye + u * lens_sample.x + v * lens_sample.y;
 
-		float viewportX = pixel_sample.x / res_x - 0.5;
-		float viewportY = pixel_sample.y / res_y - 0.5f;
 
-		viewportX = w * viewportX;
-		viewportY = h * viewportY;
 
-		Vector xComponent = u * viewportX;
-		Vector yComponent = v * viewportY;
-		Vector pixel_sample_world = xComponent + yComponent;
-
-		Vector ray_dir = GetRayDirection(pixel_sample_world, lens_sample);
+		Vector ray_dir = GetRayDirection(pixel_sample, lens_sample);
 		return Ray(eye_offset, ray_dir);
 	}
-	Vector GetRayDirection(const Vector& pixel_sample)
+	Vector GetRayDirection(const Vector& pixel_sample) //pixelsample in viewport
 	{
-		float viewportX = pixel_sample.x / res_x - 0.5f;
-		float viewportY = pixel_sample.y / res_y - 0.5f;
+		float normalizedViewportX = pixel_sample.x / res_x - 0.5f;   //camera coordinates 0-1
+		float normalizedViewportY = pixel_sample.y / res_y - 0.5f;
 
-		viewportX = w * viewportX;
-		viewportY = h * viewportY;
+		float cameraX = w * normalizedViewportX;
+		float cameraY = h * normalizedViewportY;
 
-		Vector xComponent = u * viewportX;
-		Vector yComponent = v * viewportY;
+		Vector xComponentWorld = u * cameraX;
+		Vector yComponentWorld = v * cameraY;
 
-		Vector ray_dir = (xComponent + yComponent - n * plane_dist).normalize();
+		Vector ray_dir = (xComponentWorld + yComponentWorld- n * plane_dist).normalize();
 		return ray_dir;
 	}
 
 	Vector GetRayDirection(const Vector& pixel_sample, const Vector& lens_sample) {
 		Vector p;
 
+		float normalizedViewportX = pixel_sample.x / res_x - 0.5f;   
+		float normalizedViewportY = pixel_sample.y / res_y - 0.5f;
 
-		p.x = pixel_sample.x * focal_ratio;
-		p.y = pixel_sample.y * focal_ratio;
+		float cameraX = w * normalizedViewportX;
+		float cameraY = h * normalizedViewportY;
+
+		p.x = cameraX * focal_ratio;
+		p.y = cameraY * focal_ratio;
 		float f = plane_dist * focal_ratio;//focal_ratio * (-1 * pixel_sample.z);
-		
-		
 
 		Vector ray_dir = u *(p.x - lens_sample.x)+ v * (p.y - lens_sample.y)- n * f;
 		return ray_dir.normalize(); 
