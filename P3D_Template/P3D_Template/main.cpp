@@ -58,11 +58,11 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = false;
+bool drawModeEnabled = true;
 
 //Enable antialiasing
-bool withAntialiasing = true;
-bool softShadows = true;
+bool withAntialiasing = false;
+bool softShadows = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
@@ -97,6 +97,8 @@ void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector&
 void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void hardShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 
+bool rayTraverseShadows(int objectN, Object*& currentObj, Ray& ray, float& dist, float lineLength);
+
 bool isPointObstructed(Vector fromPoint, Vector toPoint)
 {
 	int objectN = scene->getNumObjects();
@@ -106,12 +108,25 @@ bool isPointObstructed(Vector fromPoint, Vector toPoint)
 	Ray ray = Ray(fromPoint, line.normalize());
 	Object* currentObj;
 	float dist;
-	for(int i = 0; i < objectN; i++)
+	if (Accel_Struct == NONE)
+	{
+		return rayTraverseShadows(objectN, currentObj, ray, dist, lineLength);
+	}
+	else if (Accel_Struct == GRID_ACC)
+	{
+		return grid_ptr->Traverse(ray);
+	}
+
+}
+
+bool rayTraverseShadows(int objectN, Object*& currentObj, Ray& ray, float& dist, float lineLength)
+{
+	for (int i = 0; i < objectN; i++)
 	{
 		currentObj = scene->getObject(i);
 
-	
-		if(currentObj->intercepts(ray, dist))
+
+		if (currentObj->intercepts(ray, dist))
 		{
 			if (dist <= lineLength)
 				return true;

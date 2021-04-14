@@ -167,6 +167,8 @@ AABB Sphere::GetBoundingBox() {
 
 	Vector a_min = (center - Vector(radius, radius, radius));
 	Vector a_max = (center + Vector(radius, radius, radius));
+	a_min -= EPSILON;
+	a_max += EPSILON;
 	return(AABB(a_min, a_max));
 }
 
