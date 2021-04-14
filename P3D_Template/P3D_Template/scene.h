@@ -12,6 +12,7 @@ using namespace std;
 #include "vector.h"
 #include "ray.h"
 #include "boundingBox.h"
+#include "fuzzyReflector.h"
 
 #define MIN(a, b)		( ( a ) < ( b ) ? ( a ) : ( b ) )
 #define MAX(a, b)		( ( a ) > ( b ) ? ( a ) : ( b ) )
@@ -177,6 +178,9 @@ public:
 
 	bool load_p3f(const char *name);  //Load NFF file method
 	void create_random_scene();
+
+	FuzzyReflector* GetFuzzyReflector() { return fuzzyReflector; }
+	void setFuzzyReflector(FuzzyReflector* fuzzy) { fuzzyReflector = fuzzy; }
 	
 private:
 	vector<Object *> objects;
@@ -184,6 +188,7 @@ private:
 
 	Camera* camera;
 	Color bgColor;  //Background color
+	FuzzyReflector* fuzzyReflector;
 
 	bool SkyBoxFlg = false;
 
@@ -193,6 +198,8 @@ private:
 		unsigned int resY;
 		unsigned int BPP; //bytes per pixel
 	} skybox_img[6];
+
+
 
 };
 

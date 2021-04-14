@@ -700,6 +700,7 @@ void Scene::create_random_scene() {
 	Camera* camera;
 	Material* material;
 	Sphere* sphere;
+	FuzzyReflector* fuzzyreflector;
 
 	set_rand_seed(time(NULL) * time(NULL) * time(NULL));
 	material = NULL;
@@ -718,6 +719,8 @@ void Scene::create_random_scene() {
 
 	material = new Material(Color(0.5, 0.5, 0.5), 1.0, Color(0.0, 0.0, 0.0), 0.0, 10, 0, 1);
 
+	fuzzyReflector = new FuzzyReflector();
+	this->setFuzzyReflector(fuzzyReflector);
 
 	sphere = new Sphere(Vector(0.0, -1000, 0.0), 1000.0);
 	if (material) sphere->SetMaterial(material);

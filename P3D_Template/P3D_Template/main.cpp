@@ -61,8 +61,13 @@ char s[32];
 bool drawModeEnabled = true;
 
 //Enable antialiasing
-bool withAntialiasing = false;
+bool withAntialiasing = true;
+
+//Enable soft shadows
 bool softShadows = false;
+
+//Enable fuzzy reflection
+bool fuzzyReflections = true;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
@@ -96,6 +101,8 @@ void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, floa
 void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void hardShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
+
+void Reflection(Vector& normal, Ray& ray, Vector& actualHitPoint, Vector& hitPoint, Color& reflectionColor, int depth, float ior_1, Object* obj, float reflectionIndex);
 
 bool rayTraverseShadows(int objectN, Object*& currentObj, Ray& ray, float& dist, float lineLength);
 
@@ -200,30 +207,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	float reflectionIndex = obj->GetMaterial()->GetReflection();
 	if (reflectionIndex > 0)
 	{
-		
-
-		Vector myNormal = normal;
-		if (ray.direction * normal > 0)//inside to outside
-
-		{
-			myNormal = normal *-1;
-			actualHitPoint = hitPoint - normal * DISPLACE_BIAS;
-
-		}else
-		{
-			actualHitPoint = hitPoint + normal * DISPLACE_BIAS;
-		}
-		Vector inverseDirection = ray.direction * -1;
-		float newDirFloat = 2 * (inverseDirection * myNormal);
-		Vector newDir = myNormal * newDirFloat - inverseDirection;
-
-		Ray newRay = Ray(actualHitPoint, newDir);
-		reflectionColor =  rayTracing(newRay,  depth + 1,ior_1) ;//change ior to object ior
-		if (obj->GetMaterial()->GetTransmittance() == 0)
-		{
-			reflectionColor = reflectionColor * reflectionIndex * obj->GetMaterial()->GetSpecColor();
-		}
-		reflectionColor.clamp();
+		Reflection(normal, ray, actualHitPoint, hitPoint, reflectionColor, depth, ior_1, obj, reflectionIndex);
 	}
 
 	refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
@@ -302,6 +286,38 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	}
 	
 	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
+}
+
+void Reflection(Vector& normal, Ray& ray, Vector& actualHitPoint, Vector& hitPoint, Color& reflectionColor, int depth, float ior_1, Object* obj, float reflectionIndex)
+{
+	Vector myNormal = normal;
+	Vector S, Sdir;
+	if (ray.direction * normal > 0)//inside to outside
+	{
+		myNormal = normal * -1;
+		actualHitPoint = hitPoint - normal * DISPLACE_BIAS;
+	}
+	else
+	{
+		actualHitPoint = hitPoint + normal * DISPLACE_BIAS;
+	}
+
+	Vector inverseDirection = ray.direction * -1;
+	float newDirFloat = 2 * (inverseDirection * myNormal);
+	Vector newDir = myNormal * newDirFloat - inverseDirection;
+
+	if (fuzzyReflections)
+	{
+		scene->GetFuzzyReflector()->calculateFuzzyRayDirection(actualHitPoint, newDir, myNormal);
+	}
+
+	Ray newRay = Ray(actualHitPoint, newDir);
+	reflectionColor = rayTracing(newRay, depth + 1, ior_1);//change ior to object ior
+	if (obj->GetMaterial()->GetTransmittance() == 0)
+	{
+		reflectionColor = reflectionColor * reflectionIndex * obj->GetMaterial()->GetSpecColor();
+	}
+	reflectionColor.clamp();
 }
 
 void hardShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray)
@@ -940,6 +956,7 @@ void init_scene(void)
 		grid_ptr->Build(objs);
 		printf("Grid built.\n\n");
 	}
+
 	// Pixel buffer to be used in the Save Image function
 	img_Data = (uint8_t*)malloc(3 * RES_X*RES_Y * sizeof(uint8_t));
 	if (img_Data == NULL) exit(1);

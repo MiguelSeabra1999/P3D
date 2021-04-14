@@ -188,6 +188,7 @@
     <ClInclude Include="boundingBox.h" />
     <ClInclude Include="camera.h" />
     <ClInclude Include="color.h" />
+    <ClInclude Include="fuzzyReflector.h" />
     <ClInclude Include="macros.h" />
     <ClInclude Include="maths.h" />
     <ClInclude Include="ray.h" />
