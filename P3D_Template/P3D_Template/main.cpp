@@ -124,6 +124,11 @@ bool isPointObstructed(Vector fromPoint, Vector toPoint)
 	{
 		return grid_ptr->Traverse(ray);
 	}
+	else if (Accel_Struct == BVH_ACC)
+	{
+		return false;
+		//return bvh_ptr->Traverse(ray);
+	}
 
 }
 
@@ -378,6 +383,10 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	else if (Accel_Struct == GRID_ACC)
 	{
 		grid_ptr->Traverse(ray, &nearestObj, hitPoint);
+	}
+	else if (Accel_Struct == BVH_ACC)
+	{
+		bvh_ptr->Traverse(ray, &nearestObj, hitPoint);
 	}
 
 
