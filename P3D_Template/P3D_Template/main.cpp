@@ -20,9 +20,9 @@
 #include <IL/il.h>
 #include <limits>       // std::numeric_limits
 #include "scene.h"
-#include "grid.h"
 #include "maths.h"
 #include "sampler.h"
+#include "rayAccelerator.h"
 
 #define CAPTION "Whitted Ray-Tracer"
 
@@ -32,13 +32,14 @@
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 4
+#define SPP 16
 unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = GRID_ACC;
+Accelerator Accel_Struct = BVH_ACC;
 Grid* grid_ptr;
+BVH* bvh_ptr;
 
 // Current Camera Position
 float camX, camY, camZ;
@@ -64,7 +65,7 @@ bool drawModeEnabled = true;
 bool withAntialiasing = true;
 
 //Enable soft shadows
-bool softShadows = false;
+bool softShadows = true;
 
 //Enable fuzzy reflection
 bool fuzzyReflections = true;
@@ -955,6 +956,17 @@ void init_scene(void)
 		}
 		grid_ptr->Build(objs);
 		printf("Grid built.\n\n");
+	}
+	else if (Accel_Struct == BVH_ACC) {
+		bvh_ptr = new BVH();
+		std::vector<Object*> objs;
+		int num_objects = scene->getNumObjects();
+
+		for (int o = 0; o < num_objects; o++) {
+			objs.push_back(scene->getObject(o));
+		}
+		bvh_ptr->Build(objs);
+		printf("BVH built.\n\n");
 	}
 
 	// Pixel buffer to be used in the Save Image function

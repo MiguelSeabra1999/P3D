@@ -61,7 +61,7 @@ class BVH
 		BVHNode(void);
 		void setAABB(AABB& bbox_);
 		void makeLeaf(unsigned int index_, unsigned int n_objs_);
-		void makeNode(unsigned int left_index_);
+		void makeNode(unsigned int left_index);
 		bool isLeaf() { return leaf; }
 		unsigned int getIndex() { return index; }
 		unsigned int getNObjs() { return n_objs; }
@@ -86,6 +86,10 @@ public:
 	int getNumObjects();
 	
 	void Build(vector<Object*>& objects);
+	int GetLargestAxis(AABB aabb, float midPoint, int left_index, int right_index);
+	void sortByAxis(int largestAxis, int left_index, int right_index);
+	int getSplitIndex(float midPoint, int largestIndex, int left_index, int right_index);
+	AABB GetNodeBB(int left_index, int right_index);
 	void build_recursive(int left_index, int right_index, BVHNode* node);
 	bool Traverse(Ray& ray, Object** hit_obj, Vector& hit_point);
 	bool Traverse(Ray& ray);
