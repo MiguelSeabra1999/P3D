@@ -25,25 +25,32 @@ BVH::BVH(void) {}
 int BVH::getNumObjects() { return objects.size(); }
 
 
-void BVH::Build(vector<Object *> &objs) {
+void BVH::Build(vector<Object *> &objs) 
+{
+	BVHNode *root = new BVHNode();
 
-		
-			BVHNode *root = new BVHNode();
+	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	AABB world_bbox = AABB(min, max);
 
-			Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-			AABB world_bbox = AABB(min, max);
-
-			for (Object* obj : objs) {
-				AABB bbox = obj->GetBoundingBox();
-				world_bbox.extend(bbox);
-				objects.push_back(obj);
-			}
-			world_bbox.min.x -= EPSILON; world_bbox.min.y -= EPSILON; world_bbox.min.z -= EPSILON;
-			world_bbox.max.x += EPSILON; world_bbox.max.y += EPSILON; world_bbox.max.z += EPSILON;
-			root->setAABB(world_bbox);
-			nodes.push_back(root);
-			build_recursive(0, objects.size(), root); // -> root node takes all the 
-		}
+	for (Object* obj : objs) {
+		AABB bbox = obj->GetBoundingBox();
+		world_bbox.extend(bbox);
+		objects.push_back(obj);
+	}
+	world_bbox.min.x -= EPSILON; world_bbox.min.y -= EPSILON; world_bbox.min.z -= EPSILON;
+	world_bbox.max.x += EPSILON; world_bbox.max.y += EPSILON; world_bbox.max.z += EPSILON;
+	root->setAABB(world_bbox);
+	nodes.push_back(root);
+	build_recursive(0, objects.size(), root); // -> root node takes all the 
+	int i = 0;
+	for (BVHNode* node : nodes) {
+		if (node->isLeaf())
+			cout << "im node " << i << " im a leaf " << " I hold object N" << node->getIndex() << " and I hold " << node->getNObjs() << "objects\n";
+		else
+			cout << "im a node "  <<           i <<" , my left is " << node->getIndex() << "\n";
+		i++;
+	}
+}
 
 int BVH::GetLargestAxis(AABB aabb, float& midPoint, int left_index, int right_index) {
 	float tx_min, tx_max, ty_min, ty_max, tz_min, tz_max;
@@ -108,7 +115,7 @@ int BVH::getSplitIndex(float midPoint, int largestAxis, int left_index, int righ
 
 AABB BVH::GetNodeBB(int left_index, int right_index)
 {
-	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(FLT_MIN, FLT_MIN, FLT_MIN);
 	AABB node_bb = AABB(min, max);
 
 	for (int i = left_index; i < right_index; i++) {
@@ -123,8 +130,10 @@ AABB BVH::GetNodeBB(int left_index, int right_index)
 
 void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	float midPoint = 0.0f;
-	BVHNode left, right;
+	BVHNode* left = new BVHNode();
+	BVHNode *right =  new BVHNode();
 	int largestAxis, split_index;
+
 	if (right_index - left_index <= Threshold) { //leaf node 
 		node->makeLeaf(left_index, right_index - left_index);
 		//cout << "leaf" << "\n";
@@ -135,19 +144,21 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		sortByAxis(largestAxis, left_index, right_index);
 		split_index = getSplitIndex(midPoint, largestAxis, left_index, right_index);
 		if (split_index == left_index || split_index == right_index) split_index = round((right_index + left_index) / 2); //make sure that neither left or right is completely empty
-		//cout << "split_index:" << split_index << "left_index:" << left_index << "right_index:" << right_index << "\n";
+	//	cout << "split_index:" << split_index << "left_index:" << left_index << "right_index:" << right_index << "\n";
 		//left.makeNode(0);
 		//right.makeNode(split_index);
 
-		left.setAABB(GetNodeBB(left_index, split_index));
-		right.setAABB(GetNodeBB(split_index, right_index));
+		left->setAABB(GetNodeBB(left_index, split_index));
+		right->setAABB(GetNodeBB(split_index, right_index));
 
+		cout << nodes.size();
 		node->makeNode(nodes.size());
-		nodes.push_back(&left);
-		nodes.push_back(&right);
+		
+		nodes.push_back(left);
+		nodes.push_back(right);
 
-		build_recursive(left_index, split_index, &left);
-		build_recursive(split_index, right_index, &right);
+		build_recursive(left_index, split_index, left);
+		build_recursive(split_index, right_index, right);
 		
 	}
 
@@ -171,41 +182,57 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 	float t_left, t_right, t;
 	int node_index = 0;
 	bool left_hit, right_hit;
+	int leftChild, rightChild;
 
 	if (!nodes[0]->getAABB().intercepts(localRay, t_closest))
+	{
+
 		return false;
+
+	}
 	while (true)
 	{
 		if (!currentNode->isLeaf()) {
-			left_hit = nodes[node_index + 1]->getAABB().intercepts(localRay, t_left);
-			right_hit = nodes[node_index + 2]->getAABB().intercepts(localRay, t_right);
+			leftChild = currentNode->getIndex();
+			rightChild = currentNode->getIndex() + 1;
+			left_hit = nodes[leftChild]->getAABB().isInside(localRay.origin) || nodes[leftChild]->getAABB().intercepts(localRay, t_left) ;
+			right_hit = nodes[rightChild]->getAABB().isInside(localRay.origin) || nodes[rightChild]->getAABB().intercepts(localRay, t_right);
+
+			
 			if (left_hit && right_hit){
-				cout << "two" << "\n";
-				currentNode = nodes[node_index + 1];
-				StackItem stackitem = StackItem(nodes[node_index + 2], t_right);
+				//cout << "two" << "\n";
+
+				int stackNode, nextNode;
+				bool leftCloser = t_left < t_right;
+				stackNode = leftCloser ? leftChild : rightChild;
+				t = leftCloser ? t_left : t_right;
+				nextNode = leftCloser ? rightChild : leftChild;
+
+				currentNode = nodes[nextNode];
+				StackItem stackitem = StackItem(nodes[stackNode], t);
 				hit_stack.push(stackitem);
 			}
 			else if (left_hit && !right_hit) {
-				cout << "left" << "\n";
-				currentNode = nodes[node_index + 1];
+				//cout << "left" << "\n";
+				currentNode = nodes[leftChild];
 				//t_closest = t_left;
 			}
 			else if (right_hit && !left_hit) {
-				cout << "right" << "\n";
-				currentNode = nodes[node_index + 2];
+			//	cout << "right" << "\n";
+				currentNode = nodes[rightChild];
 				//t_closest = t_right;
 			}
 		}
 		else {  //isleaf
 			for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
-				if (objects.at(i)->intercepts(localRay, t)) {
+				if (objects.at(i)->intercepts(localRay, t) && t < t_closest ) {
 					t_closest = t;
 					closestHit = objects.at(i);
-					break; //necessary??
+			
 				}
 			}
 		}
-		while (aux == true) {
+		while (true) {
 			if (hit_stack.empty()) {
 				if (closestHit == nullptr)
 					return false;
@@ -221,7 +248,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 				if (item.t < t_closest) {
 					currentNode = item.ptr;
 					t_closest = item.t;
-					aux = false; //necessary??
+					break;
 				}
 			}
 				
