@@ -155,116 +155,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 	   // do not confuse with left_nodde_index and right_node_index which refer to indices in the nodes vector. 
 	    // node.index can have a index of objects vector or a index of nodes vector
 			
-	}
-
-bool BVH::intersect(const Ray& ray)
-{
-	Object* closestHit = nullptr;
-	Ray localRay = ray;
-	BVHNode* currentNode = nodes[0];
-	float t_left, t_right, t_closest, t;
-	int node_index = 0;
-	bool left_hit, right_hit;
-
-	if (!nodes[0]->getAABB().intercepts(localRay, t_closest))
-		return false;
-	while (true)
-	{
-		if (!currentNode->isLeaf()) {
-			left_hit = nodes[node_index + 1]->getAABB().intercepts(localRay, t_left);
-			right_hit = nodes[node_index + 2]->getAABB().intercepts(localRay, t_right);
-			if (left_hit && right_hit) {
-				currentNode = nodes[node_index + 1];
-				StackItem stackitem = StackItem(nodes[node_index + 2], t_right);
-				hit_stack.push(stackitem);
-			}
-			else if (left_hit && !right_hit) {
-				currentNode = nodes[node_index + 1];
-				//t_closest = t_left;
-			}
-			else if (right_hit && !left_hit) {
-				currentNode = nodes[node_index + 2];
-				//t_closest = t_right;
-			}
-		}
-		else {  //isleaf
-			for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
-				if (objects.at(i)->intercepts(localRay, t)) {
-					return true;
-				}
-			}
-		}
-		while (true) {
-			if (!hit_stack.empty()) {
-				return false;
-			}
-			else {
-				StackItem item = hit_stack.top();
-				hit_stack.pop();
-				currentNode = item.ptr;
-			}
-		}
-		node_index += 2;
-	}
 }
-
-bool BVH::intersect(const Ray& ray, Object** hit_obj, Vector& hit_point)
-{
-	Object* closestHit = nullptr;
-	Ray localRay = ray;
-	BVHNode* currentNode = nodes[0];
-	float t_left, t_right, t_closest, t;
-	int node_index = 0;
-	bool left_hit, right_hit;
-
-	if (!nodes[0]->getAABB().intercepts(localRay, t_closest))
-		return false;
-	while (true)
-	{
-		if (!currentNode->isLeaf()) {
-			left_hit = nodes[node_index + 1]->getAABB().intercepts(localRay, t_left);
-			right_hit = nodes[node_index + 2]->getAABB().intercepts(localRay, t_right);
-			if (left_hit && right_hit) {
-				currentNode = nodes[node_index + 1];
-				StackItem stackitem = StackItem(nodes[node_index + 2], t_right);
-				hit_stack.push(stackitem);
-			}
-			else if (left_hit && !right_hit) {
-				currentNode = nodes[node_index + 1];
-				//t_closest = t_left;
-			}
-			else if (right_hit && !left_hit) {
-				currentNode = nodes[node_index + 2];
-				//t_closest = t_right;
-			}
-		}
-		else {  //isleaf
-			for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
-				if (objects.at(i)->intercepts(localRay, t)) {
-					t_closest = t;
-					closestHit = objects.at(i);
-				}		
-			}
-		}
-		while (true) {
-			if (!hit_stack.empty()) {
-				if (closestHit == nullptr)
-					return false;
-				else return true;
-			}
-			else {
-				StackItem item = hit_stack.top();
-				hit_stack.pop();
-				if (item.t < t_closest) {
-					currentNode = item.ptr;
-					t_closest = item.t;
-				}
-			}
-		}
-	}
-}
-
-
 
 bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 	/*float tmp;
@@ -288,16 +179,19 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 		if (!currentNode->isLeaf()) {
 			left_hit = nodes[node_index + 1]->getAABB().intercepts(localRay, t_left);
 			right_hit = nodes[node_index + 2]->getAABB().intercepts(localRay, t_right);
-			if (left_hit && right_hit) {
+			if (left_hit && right_hit){
+				cout << "two" << "\n";
 				currentNode = nodes[node_index + 1];
 				StackItem stackitem = StackItem(nodes[node_index + 2], t_right);
 				hit_stack.push(stackitem);
 			}
 			else if (left_hit && !right_hit) {
+				cout << "left" << "\n";
 				currentNode = nodes[node_index + 1];
 				//t_closest = t_left;
 			}
 			else if (right_hit && !left_hit) {
+				cout << "right" << "\n";
 				currentNode = nodes[node_index + 2];
 				//t_closest = t_right;
 			}

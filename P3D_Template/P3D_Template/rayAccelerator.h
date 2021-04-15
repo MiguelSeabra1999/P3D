@@ -91,9 +91,7 @@ public:
 	int getSplitIndex(float midPoint, int largestIndex, int left_index, int right_index);
 	AABB GetNodeBB(int left_index, int right_index);
 	void build_recursive(int left_index, int right_index, BVHNode* node);
-	bool BVH::intersect(const Ray& ray); // shadow ray
-	bool BVH::intersect(const Ray& ray, Object** hit_obj, Vector& hit_point); // closest hit
-	bool Traverse(Ray& ray, Object** hit_obj, Vector& hit_point); 
-	bool Traverse(Ray& ray);
+	bool Traverse(Ray& ray, Object** hit_obj, Vector& hit_point); // closest hit
+	bool Traverse(Ray& ray); // shadow ray
 };
 #endif
