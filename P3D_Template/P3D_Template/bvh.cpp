@@ -177,22 +177,22 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 	while (true)
 	{
 		if (!currentNode->isLeaf()) {
-			left_hit = nodes[node_index + 1]->getAABB().intercepts(localRay, t_left);
-			right_hit = nodes[node_index + 2]->getAABB().intercepts(localRay, t_right);
-			if (left_hit && right_hit){
+			left_hit = nodes[currentNode->getIndex()]->getAABB().intercepts(localRay, t_left);
+			right_hit = nodes[currentNode->getIndex() + 1]->getAABB().intercepts(localRay, t_right);
+			if (left_hit == true && right_hit == true){
 				cout << "two" << "\n";
-				currentNode = nodes[node_index + 1];
-				StackItem stackitem = StackItem(nodes[node_index + 2], t_right);
+				currentNode = nodes[currentNode->getIndex()];
+				StackItem stackitem = StackItem(nodes[currentNode->getIndex() + 1], t_right);
 				hit_stack.push(stackitem);
 			}
-			else if (left_hit && !right_hit) {
+			else if (left_hit == true && !right_hit) {
 				cout << "left" << "\n";
-				currentNode = nodes[node_index + 1];
+				currentNode = nodes[currentNode->getIndex()];
 				//t_closest = t_left;
 			}
-			else if (right_hit && !left_hit) {
+			else if (right_hit == true && !left_hit) {
 				cout << "right" << "\n";
-				currentNode = nodes[node_index + 2];
+				currentNode = nodes[currentNode->getIndex() + 1];
 				//t_closest = t_right;
 			}
 		}
