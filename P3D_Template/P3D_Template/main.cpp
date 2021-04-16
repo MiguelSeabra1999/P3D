@@ -37,7 +37,7 @@ unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = NONE;
+Accelerator Accel_Struct = BVH_ACC;
 Grid* grid_ptr;
 BVH* bvh_ptr;
 
@@ -59,16 +59,16 @@ long myTime, timebase = 0, frame = 0;
 char s[32];
 
 //Enable OpenGL drawing.  
-bool drawModeEnabled = true;
+bool drawModeEnabled = false;
 
 //Enable antialiasing
 bool withAntialiasing = false;
 
 //Enable soft shadows
-bool softShadows = false;
+bool softShadows = true;
 
 //Enable fuzzy reflection
-bool fuzzyReflections = false;
+bool fuzzyReflections = true;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
@@ -107,7 +107,7 @@ void Reflection(Vector& normal, Ray& ray, Vector& actualHitPoint, Vector& hitPoi
 
 bool rayTraverseShadows(int objectN, Object*& currentObj, Ray& ray, float& dist, float lineLength);
 
-bool isPointObstructed(Vector fromPoint, Vector toPoint)
+bool isPointObstructed(Vector& fromPoint, Vector& toPoint)
 {
 	int objectN = scene->getNumObjects();
 	Vector line = toPoint - fromPoint;

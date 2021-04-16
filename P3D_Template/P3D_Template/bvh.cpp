@@ -29,7 +29,7 @@ void BVH::Build(vector<Object *> &objs)
 {
 	BVHNode *root = new BVHNode();
 
-	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(FLT_MIN, FLT_MIN, FLT_MIN);
 	AABB world_bbox = AABB(min, max);
 
 	for (Object* obj : objs) {
@@ -111,14 +111,16 @@ int BVH::getSplitIndex(float midPoint, int largestAxis, int left_index, int righ
 			return i;
 		}
 	}
+	return -1;
 }
 
 AABB BVH::GetNodeBB(int left_index, int right_index)
 {
 	Vector min = Vector(FLT_MAX, FLT_MAX, FLT_MAX), max = Vector(FLT_MIN, FLT_MIN, FLT_MIN);
 	AABB node_bb = AABB(min, max);
-
-	for (int i = left_index; i < right_index; i++) {
+	int start = left_index;
+	int end = right_index;
+	for (int i = start; i < right_index; i++) {
 		AABB bb = objects.at(i)->GetBoundingBox();
 		node_bb.extend(bb);
 	}
@@ -143,7 +145,7 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		largestAxis = GetLargestAxis(node->getAABB(), midPoint, left_index, right_index);
 		sortByAxis(largestAxis, left_index, right_index);
 		split_index = getSplitIndex(midPoint, largestAxis, left_index, right_index);
-		if (split_index == left_index || split_index == right_index) split_index = round((right_index + left_index) / 2); //make sure that neither left or right is completely empty
+		if (split_index == left_index || split_index == right_index || split_index == -1) split_index = round((right_index + left_index) / 2); //make sure that neither left or right is completely empty
 	//	cout << "split_index:" << split_index << "left_index:" << left_index << "right_index:" << right_index << "\n";
 		//left.makeNode(0);
 		//right.makeNode(split_index);
