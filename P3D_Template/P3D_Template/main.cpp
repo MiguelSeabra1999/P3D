@@ -32,12 +32,12 @@
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 16
+#define SPP 1
 unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = BVH_ACC;
+Accelerator Accel_Struct = NONE;
 Grid* grid_ptr;
 BVH* bvh_ptr;
 
@@ -62,13 +62,13 @@ char s[32];
 bool drawModeEnabled = true;
 
 //Enable antialiasing
-bool withAntialiasing = true;
+bool withAntialiasing = false;
 
 //Enable soft shadows
-bool softShadows = true;
+bool softShadows = false;
 
 //Enable fuzzy reflection
-bool fuzzyReflections = true;
+bool fuzzyReflections = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
@@ -126,8 +126,7 @@ bool isPointObstructed(Vector fromPoint, Vector toPoint)
 	}
 	else if (Accel_Struct == BVH_ACC)
 	{
-		return false;
-		//return bvh_ptr->Traverse(ray);
+		return bvh_ptr->Traverse(ray);
 	}
 
 }
@@ -217,7 +216,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 	}
 
 	refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
-	if (false && obj->GetMaterial()->GetTransmittance() > 0)
+	if ( obj->GetMaterial()->GetTransmittance() > 0)
 	{
 		float fromIor;
 		float toIor;
