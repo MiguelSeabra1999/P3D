@@ -1,6 +1,5 @@
 #include "rayAccelerator.h"
 #include "macros.h"
-
 using namespace std;
 
 BVH::BVHNode::BVHNode(void) {}
@@ -176,6 +175,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 	Object* closestHit = nullptr;
 	Ray localRay = ray;
 	BVHNode* currentNode = nodes[0];
+	AABB closestBB;
 	float t_left, t_right, t;
 
 	bool left_hit, right_hit;
@@ -224,6 +224,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 				if (objects.at(i)->intercepts(localRay, t) && t < t_closest ) {
 					t_closest = t;
 					closestHit = objects.at(i);
+					closestBB = currentNode->getAABB();
 				}
 			}
 		}
@@ -240,7 +241,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 			else {
 				StackItem item = hit_stack.top();
 				hit_stack.pop();
-				if (item.t < t_closest) {
+				if (item.t < t_closest || item.ptr->getAABB().intercepts( closestBB)) /*best  BB overlaps this new itm's BB*/ {
 					currentNode = item.ptr;
 					break;
 				}
@@ -252,12 +253,16 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 
 bool BVH::Traverse(Ray& ray) {  //shadow ray
 
+	double length = ray.direction.length(); //distance between light and intersection point
+	ray.direction.normalize();
 
 	Ray localRay = ray;
 	BVHNode* currentNode = nodes[0];
 	float t_left, t_right, t_closest, t;
 	int leftChild, rightChild;
 	bool left_hit, right_hit;
+
+	
 
 	if (!nodes[0]->getAABB().intercepts(localRay, t))
 		return false;
@@ -287,7 +292,7 @@ bool BVH::Traverse(Ray& ray) {  //shadow ray
 		}
 		else {  //isleaf
 			for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNObjs(); i++) {
-				if (objects.at(i)->intercepts(localRay, t)) {
+				if (objects.at(i)->intercepts(localRay, t) && t < length) {
 					while (!hit_stack.empty()) {
 						hit_stack.pop();
 					}

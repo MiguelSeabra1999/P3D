@@ -32,7 +32,7 @@
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 256
+#define SPP 1
 unsigned int FrameCount = 0;
 
 // Accelerators
@@ -65,10 +65,10 @@ bool drawModeEnabled = false;
 bool withAntialiasing = true;
 
 //Enable soft shadows
-bool softShadows = true;
+bool softShadows = false;
 
 //Enable fuzzy reflection
-bool fuzzyReflections = true;
+bool fuzzyReflections = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
@@ -113,7 +113,7 @@ bool isPointObstructed(Vector& fromPoint, Vector& toPoint)
 	Vector line = toPoint - fromPoint;
 	float lineLength = line.length();
 
-	Ray ray = Ray(fromPoint, line.normalize());
+	Ray ray = Ray(fromPoint, line);
 	Object* currentObj;
 	float dist;
 	if (Accel_Struct == NONE)
@@ -404,7 +404,7 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	    return trace(nearestObj, hitPoint, normal, ray,ior_1, depth);
 	}
 
-	return scene->GetBackgroundColor();
+	return scene->GetSkyboxColor(ray);
 }
 
 void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, float& minDist, Object*& nearestObj)
@@ -709,8 +709,8 @@ void renderScene()
 			barUpdateCount--;
 			if(barUpdateCount == 0)
 			{
-				PrintProgress(currentPixel/pixelCount);
-				barUpdateCount = barUpdateCount;
+				//PrintProgress(currentPixel/pixelCount);
+				barUpdateCount = barUpdateFreq;
 			}
 		}
 	
@@ -1007,7 +1007,7 @@ void init_scene(void)
 	}
 
 	// Pixel buffer to be used in the Save Image function
-	img_Data = (uint8_t*)malloc(3 * RES_X*RES_Y * sizeof(uint8_t));
+	img_Data = (uint8_t*)malloc(3*RES_X*RES_Y * sizeof(uint8_t));
 	if (img_Data == NULL) exit(1);
 }
 
