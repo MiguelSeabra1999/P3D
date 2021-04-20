@@ -84,8 +84,6 @@ Plane::Plane(Vector& P0, Vector& P1, Vector& P2)
    //Calculate the normal plane: counter-clockwise vectorial product.
    PN = P01 % P02;
    
-   //if (P01 * PN < 0)
-	 //  PN = P02 % P01;
 
    if ((l=PN.length()) == 0.0)
    {
@@ -246,7 +244,7 @@ bool aaBox::intercepts(Ray& ray, float& t)
 		face_out = (b >= 0.0f) ? Vector(0, 1, 0) : Vector(0, -1, 0);
 	}
 
-	if (tz_max < tL) { //??? help what is 
+	if (tz_max < tL) {
 		tL = tz_max;
 		face_out = (c >= 0.0f) ? Vector(0, 0, 1) : Vector(0, 0, -1);
 	}
@@ -266,52 +264,6 @@ bool aaBox::intercepts(Ray& ray, float& t)
 
 	return false; 
 
-	/*float t_min = (min.x - ox) / dx;
-	float t_max = (max.x - ox) / dx;
-
-	if (t_min > t_max)
-		std::swap(t_min, t_max);
-
-	float ty_min = (min.x - oy) / dy;
-	float ty_max = (max.y - oy) / dy;
-
-	if (ty_min > ty_max)
-		std::swap(ty_min, ty_max);
-
-	if ((t_min > ty_max) || ty_min > t_max)
-		return false;
-
-	if (ty_min > t_min)
-		t_min = ty_max;
-
-	if (ty_max < t_max)
-		t_max = ty_max;
-
-	float tz_min = (min.z - oz) / dz;
-	float tz_max = (max.z - oz) / dz;
-
-	if (tz_min > tz_max)
-		swap(tz_min, tz_max);
-
-	if ((t_min > tz_max) || (tz_min > t_max))
-		return false;
-
-	if (tz_min > t_min)
-		t_min = tz_min;
-
-	if (tz_max < t_max){
-		t_max = tz_max;
-	}
-	
-	t = t_min;
-
-	if (t < 0) {
-		t = t_max;
-		if (t < 0) 
-			return false;
-	}
-
-	return true;*/
 }
 
 Vector aaBox::getNormal(Vector point)

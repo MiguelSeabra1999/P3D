@@ -42,13 +42,6 @@ void BVH::Build(vector<Object *> &objs)
 	nodes.push_back(root);
 	build_recursive(0, objects.size(), root); // -> root node takes all the 
 	int i = 0;
-	/*for (BVHNode* node : nodes) {
-		if (node->isLeaf())
-			cout << "im node " << i << " im a leaf " << " I hold object N" << node->getIndex() << " and I hold " << node->getNObjs() << "objects\n";
-		else
-			cout << "im a node "  <<           i <<" , my left is " << node->getIndex() << "\n";
-		i++;
-	}*/
 }
 
 int BVH::GetLargestAxis(AABB aabb, float& midPoint, int left_index, int right_index) {
@@ -137,7 +130,6 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 
 	if (right_index - left_index <= Threshold) { //leaf node 
 		node->makeLeaf(left_index, right_index - left_index);
-		//cout << "leaf" << "\n";
 		return;
 	}
 	else {
@@ -145,9 +137,6 @@ void BVH::build_recursive(int left_index, int right_index, BVHNode *node) {
 		sortByAxis(largestAxis, left_index, right_index);
 		split_index = getSplitIndex(midPoint, largestAxis, left_index, right_index);
 		if (split_index == left_index || split_index == right_index || split_index == -1) split_index = round((right_index + left_index) / 2); //make sure that neither left or right is completely empty
-	//	cout << "split_index:" << split_index << "left_index:" << left_index << "right_index:" << right_index << "\n";
-		//left.makeNode(0);
-		//right.makeNode(split_index);
 
 		left->setAABB(GetNodeBB(left_index, split_index));
 		right->setAABB(GetNodeBB(split_index, right_index));
@@ -173,6 +162,7 @@ bool BVH::Traverse(Ray& ray, Object** hit_obj, Vector& hit_point) {
 	float t_closest = FLT_MAX;  //contains the closest primitive intersection
 	bool aux = true;
 	Object* closestHit = nullptr;
+	ray.direction.normalize();
 	Ray localRay = ray;
 	BVHNode* currentNode = nodes[0];
 	AABB closestBB;
