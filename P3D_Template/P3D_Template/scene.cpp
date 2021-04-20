@@ -499,7 +499,8 @@ Color Scene::GetSkyboxColor(Ray& r) {
 	float green = u8tofloat(skybox_img[img_side].img[(yp*width + xp) * bytesperpixel + 1]);
 	float blue = u8tofloat(skybox_img[img_side].img[(yp*width + xp) * bytesperpixel + 2]);
 
-	return(Color(red, green, blue));
+	return Color(red, green, blue);
+	
 }
 
 

@@ -32,7 +32,7 @@
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 1
+#define SPP 256
 unsigned int FrameCount = 0;
 
 // Accelerators
@@ -65,10 +65,10 @@ bool drawModeEnabled = false;
 bool withAntialiasing = true;
 
 //Enable soft shadows
-bool softShadows = false;
+bool softShadows = true;
 
 //Enable fuzzy reflection
-bool fuzzyReflections = false;
+bool fuzzyReflections = true;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
