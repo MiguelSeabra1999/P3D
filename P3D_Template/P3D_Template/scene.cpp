@@ -10,7 +10,8 @@
 Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 {
 	points[0] = P0; points[1] = P1; points[2] = P2;
-
+	p0p1 = points[1] - points[0];
+	p0p2 = points[2] - points[0];
 
 	/* Calculate the normal */
 	normal = (P2 - P1) % (P2 - P0);
@@ -44,8 +45,7 @@ Vector Triangle::getNormal(Vector point)
 
 bool Triangle::intercepts(Ray& r, float& t ) {
 
-	Vector p0p1 = points[1] - points[0];
-	Vector p0p2 = points[2] - points[0];
+
 	Vector projVec = r.direction % p0p2;
 	float det = p0p1 * projVec;
 

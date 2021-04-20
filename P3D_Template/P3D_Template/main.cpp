@@ -32,12 +32,12 @@
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 256
+#define SPP 1
 unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = NONE;
+Accelerator Accel_Struct = BVH_ACC;
 Grid* grid_ptr;
 BVH* bvh_ptr;
 

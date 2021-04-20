@@ -28,7 +28,7 @@ typedef enum { RIGHT, LEFT, TOP, BOTTOM, FRONT, BACK } CubeMap;
 
 
 #define EPSILON			0.01f
-#define EPSILON2		0.0000001f
+#define EPSILON2		0.00000001f
 
 
 class Material
@@ -118,6 +118,8 @@ protected:
 	Vector points[3];
 	Vector normal;
 	Vector Min, Max;
+	Vector p0p1;
+	Vector p0p2;
 };
 
 
