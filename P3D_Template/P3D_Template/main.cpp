@@ -96,16 +96,13 @@ int RES_X, RES_Y;
 int WindowHandle = 0;
 
 Color rayTracing(Ray ray, int depth, float ior_1);
-
 void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, float& minDist, Object*& nearestObj);
-
 void antiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void notAntiAliasedSoftShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
 void hardShadows(Light* currentLight, Vector& actualHitPoint, Vector& L, Vector& normal, Color& lightSum, Object* obj, Vector& shadingNormal, Ray& ray);
-
 void Reflection(Vector& normal, Ray& ray, Vector& actualHitPoint, Vector& hitPoint, Color& reflectionColor, int depth, float ior_1, Object* obj, float reflectionIndex);
-
 bool rayTraverseShadows(int objectN, Object*& currentObj, Ray& ray, float& dist, float lineLength);
+
 
 bool isPointObstructed(Vector& fromPoint, Vector& toPoint)
 {
@@ -215,7 +212,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		Reflection(normal, ray, actualHitPoint, hitPoint, reflectionColor, depth, ior_1, obj, reflectionIndex);
 	}
 
-	refractionIndex = obj->GetMaterial()->GetRefrIndex(); //??????
+	refractionIndex = obj->GetMaterial()->GetRefrIndex(); 
 	if ( obj->GetMaterial()->GetTransmittance() > 0)
 	{
 		float fromIor;
@@ -224,13 +221,12 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		Vector invertedNormal = normal * -1;
 		actualHitPoint = hitPoint;
 		Vector mynormal = normal;
-		/*fromIor = ior_1;
-		toIor = refractionIndex;*/
+
 		if(ray.direction * normal <=0)
 		{
-			fromIor = ior_1;  ///???? am I suposed to do this
+			fromIor = ior_1;  
 			toIor = refractionIndex;
-			actualHitPoint = hitPoint + invertedNormal * DISPLACE_BIAS;///  parar de fazer displace *2
+			actualHitPoint = hitPoint + invertedNormal * DISPLACE_BIAS;
 		
 		}else
 		{
@@ -247,7 +243,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 
 		Vector invertedRayDirection = ray.direction * -1;
 		
-		float cosTetaI = max(min(invertedRayDirection * mynormal, 1), -1); //check this 
+		float cosTetaI = max(min(invertedRayDirection * mynormal, 1), -1); 
 		float sinTetaI = sqrt(-1 * cosTetaI * cosTetaI + 1);
 		float sinTetaT = (fromIor/ toIor ) * sinTetaI;
 		float cosTetaT = sqrt(1- sinTetaT*sinTetaT);
@@ -262,7 +258,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		float aux = (fromIor - toIor) / (fromIor + toIor);
 		float R0 = (aux * aux);
 
-		if (sinTetaI >= 1)///aqui cancelar refra��o, s� reflra�ao
+		if (sinTetaI >= 1)///aqui cancelar refracao, só reflecao
 		{
 			attenuation = 1;
 
@@ -271,23 +267,16 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		 attenuation = R0 + (1.0f - R0) * pow((1.0f - cosTetaI), 5);
 		
 		}
-	//	attenuation = abs(attenuation);
-		 /** /
-		 float eta = fromIor / toIor;
-		 float k = 1 - eta * eta * (1 - cosTetaI * cosTetaI);
-		 Vector Refraction = k < 0 ? Vector(0, 0, 0) : (invertedRayDirection * eta + mynormal * (eta * cosTetaI - sqrtf(k)));
-		 /**/
+
 
 		Ray refractionRay =  Ray(actualHitPoint, refractionDirection);
 		refractionColor = rayTracing(refractionRay, depth+1, toIor);
 		refractionColor.clamp();
-		//objectColor = objectColor * attenuation + refractedColor * (1-attenuation);
-		//objectColor.clamp();
-		
+
 	}
 	else
 	{
-		return (objectColor + reflectionColor /** obj->GetMaterial()->GetSpecular() */).clamp();//reflection color*specular
+		return (objectColor + reflectionColor).clamp();
 	}
 	
 	return (objectColor + (reflectionColor* attenuation) + (refractionColor *(1- attenuation))).clamp();
@@ -317,7 +306,7 @@ void Reflection(Vector& normal, Ray& ray, Vector& actualHitPoint, Vector& hitPoi
 	}
 
 	Ray newRay = Ray(actualHitPoint, newDir);
-	reflectionColor = rayTracing(newRay, depth + 1, ior_1);//change ior to object ior
+	reflectionColor = rayTracing(newRay, depth + 1, ior_1);
 	if (obj->GetMaterial()->GetTransmittance() == 0)
 	{
 		reflectionColor = reflectionColor * reflectionIndex * obj->GetMaterial()->GetSpecColor();
@@ -393,13 +382,6 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	if(nearestObj != NULL)
 	{
 		normal = nearestObj->getNormal(hitPoint);
-	/*	if(ray.direction * normal <= 0)
-			hitPoint = hitPoint + normal * DISPLACE_BIAS;
-		else
-			hitPoint = hitPoint - normal * DISPLACE_BIAS;*/
-
-		
-		
 		
 	    return trace(nearestObj, hitPoint, normal, ray,ior_1, depth);
 	}
@@ -668,8 +650,6 @@ void renderScene()
 				color = color + rayTracing(ray, 1, 1.0).clamp();
 
 			}
-
-			//color = scene->GetBackgroundColor(); //TO CHANGE - just for the template
 
 			img_Data[counter++] = u8fromfloat((float)color.r());
 			img_Data[counter++] = u8fromfloat((float)color.g());
@@ -966,6 +946,7 @@ void init_scene(void)
 		grid_ptr->Build(objs);
 		printf("Grid built.\n\n");
 	}
+	//BVH ACCELERATOR
 	else if (Accel_Struct == BVH_ACC) {
 		bvh_ptr = new BVH();
 		std::vector<Object*> objs;

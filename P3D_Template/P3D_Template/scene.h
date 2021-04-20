@@ -27,8 +27,8 @@ using namespace std;
 typedef enum { RIGHT, LEFT, TOP, BOTTOM, FRONT, BACK } CubeMap;
 
 
-#define EPSILON			0.01f
-#define EPSILON2		0.00000001f
+#define EPSILON			0.0001f
+#define EPSILON2		0.000001f
 
 
 class Material

@@ -69,7 +69,7 @@ class BVH
 	};
 
 private:
-	int Threshold = 20;
+	int Threshold = 25;
 	vector<Object*> objects;
 	vector<BVH::BVHNode*> nodes;
 
