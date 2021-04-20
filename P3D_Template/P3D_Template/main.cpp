@@ -1,7 +1,7 @@
  ///////////////////////////////////////////////////////////////////////
 //
 // P3D Course
-// (c) 2021 by João Madeiras Pereira
+// (c) 2021 by Joï¿½o Madeiras Pereira
 //Ray Tracing P3F scenes and drawing points with Modern OpenGL
 //
 ///////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = BVH_ACC;
+Accelerator Accel_Struct = NONE;
 Grid* grid_ptr;
 BVH* bvh_ptr;
 
@@ -262,7 +262,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		float aux = (fromIor - toIor) / (fromIor + toIor);
 		float R0 = (aux * aux);
 
-		if (sinTetaI >= 1)///aqui cancelar refração, só reflraçao
+		if (sinTetaI >= 1)///aqui cancelar refraï¿½ï¿½o, sï¿½ reflraï¿½ao
 		{
 			attenuation = 1;
 
@@ -529,8 +529,8 @@ void createBufferObjects()
 	glGenBuffers(2, VboId);
 	glBindBuffer(GL_ARRAY_BUFFER, VboId[0]);
 
-	/* Só se faz a alocação dos arrays glBufferData (NULL), e o envio dos pontos para a placa gráfica
-	é feito na drawPoints com GlBufferSubData em tempo de execução pois os arrays são GL_DYNAMIC_DRAW */
+	/* Sï¿½ se faz a alocaï¿½ï¿½o dos arrays glBufferData (NULL), e o envio dos pontos para a placa grï¿½fica
+	ï¿½ feito na drawPoints com GlBufferSubData em tempo de execuï¿½ï¿½o pois os arrays sï¿½o GL_DYNAMIC_DRAW */
 	glBufferData(GL_ARRAY_BUFFER, size_vertices, NULL, GL_DYNAMIC_DRAW);
 	glEnableVertexAttribArray(VERTEX_COORD_ATTRIB);
 	glVertexAttribPointer(VERTEX_COORD_ATTRIB, 2, GL_FLOAT, 0, 0, 0);
@@ -613,25 +613,7 @@ void timer(int value)
 	FrameCount = 0;
 	glutTimerFunc(1000, timer, 0);
 }
-void PrintProgress(float progress)
-{
 
-	int barWidth = 70;
-
-	std::cout << "[";
-	int pos = barWidth * progress;
-	for (int i = 0; i < barWidth; ++i) {
-		if (i < pos) std::cout << "=";
-		else if (i == pos) std::cout << ">";
-		else std::cout << " ";
-	}
-	std::cout << "] " << int(progress * 100.0) << " %\r";
-	std::cout.flush();
-
-
-
-	std::cout << std::endl;
-}
 // Render function by primary ray casting from the eye towards the scene's objects
 
 void renderScene()
@@ -639,10 +621,7 @@ void renderScene()
 	int index_pos=0;
 	int index_col=0;
 	unsigned int counter = 0;
-	int pixelCount = RES_Y * RES_X;
-	int currentPixel = 0;
-	int barUpdateFreq = 100;
-	int barUpdateCount = barUpdateFreq;
+
 
 	if (drawModeEnabled) {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -704,13 +683,6 @@ void renderScene()
 				colors[index_col++] = (float)color.g();
 
 				colors[index_col++] = (float)color.b();
-			}
-			currentPixel++;
-			barUpdateCount--;
-			if(barUpdateCount == 0)
-			{
-				//PrintProgress(currentPixel/pixelCount);
-				barUpdateCount = barUpdateFreq;
 			}
 		}
 	
