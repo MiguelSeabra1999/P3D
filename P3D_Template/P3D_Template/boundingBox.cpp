@@ -61,6 +61,12 @@ void AABB::extend(AABB box) {
 
 // --------------------------------------------------------------------- AABB intersection
 
+bool AABB::intercepts(const AABB& a) {
+	return (a.min.x <= max.x && a.max.x >= min.x) &&
+		(a.min.y <= max.y && a.max.y >= min.y) &&
+		(a.min.z <= max.z && a.max.z >= min.z);
+}
+
 bool AABB::intercepts(const Ray& ray, float& t)
 {
 	double t0, t1;

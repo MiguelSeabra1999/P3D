@@ -1,7 +1,7 @@
  ///////////////////////////////////////////////////////////////////////
 //
 // P3D Course
-// (c) 2021 by João Madeiras Pereira
+// (c) 2021 by Joï¿½o Madeiras Pereira
 //Ray Tracing P3F scenes and drawing points with Modern OpenGL
 //
 ///////////////////////////////////////////////////////////////////////
@@ -32,7 +32,7 @@
 #define MAX_DEPTH 4
 #define DISPLACE_BIAS 0.001
 
-#define SPP 256
+#define SPP 1
 unsigned int FrameCount = 0;
 
 // Accelerators
@@ -65,10 +65,10 @@ bool drawModeEnabled = false;
 bool withAntialiasing = true;
 
 //Enable soft shadows
-bool softShadows = true;
+bool softShadows = false;
 
 //Enable fuzzy reflection
-bool fuzzyReflections = true;
+bool fuzzyReflections = false;
 
 bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
@@ -113,7 +113,7 @@ bool isPointObstructed(Vector& fromPoint, Vector& toPoint)
 	Vector line = toPoint - fromPoint;
 	float lineLength = line.length();
 
-	Ray ray = Ray(fromPoint, line.normalize());
+	Ray ray = Ray(fromPoint, line);
 	Object* currentObj;
 	float dist;
 	if (Accel_Struct == NONE)
@@ -262,7 +262,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 		float aux = (fromIor - toIor) / (fromIor + toIor);
 		float R0 = (aux * aux);
 
-		if (sinTetaI >= 1)///aqui cancelar refração, só reflraçao
+		if (sinTetaI >= 1)///aqui cancelar refraï¿½ï¿½o, sï¿½ reflraï¿½ao
 		{
 			attenuation = 1;
 
@@ -404,7 +404,7 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	    return trace(nearestObj, hitPoint, normal, ray,ior_1, depth);
 	}
 
-	return scene->GetBackgroundColor();
+	return scene->GetSkyboxColor(ray);
 }
 
 void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, float& minDist, Object*& nearestObj)
@@ -529,8 +529,8 @@ void createBufferObjects()
 	glGenBuffers(2, VboId);
 	glBindBuffer(GL_ARRAY_BUFFER, VboId[0]);
 
-	/* Só se faz a alocação dos arrays glBufferData (NULL), e o envio dos pontos para a placa gráfica
-	é feito na drawPoints com GlBufferSubData em tempo de execução pois os arrays são GL_DYNAMIC_DRAW */
+	/* Sï¿½ se faz a alocaï¿½ï¿½o dos arrays glBufferData (NULL), e o envio dos pontos para a placa grï¿½fica
+	ï¿½ feito na drawPoints com GlBufferSubData em tempo de execuï¿½ï¿½o pois os arrays sï¿½o GL_DYNAMIC_DRAW */
 	glBufferData(GL_ARRAY_BUFFER, size_vertices, NULL, GL_DYNAMIC_DRAW);
 	glEnableVertexAttribArray(VERTEX_COORD_ATTRIB);
 	glVertexAttribPointer(VERTEX_COORD_ATTRIB, 2, GL_FLOAT, 0, 0, 0);
@@ -684,7 +684,6 @@ void renderScene()
 
 				colors[index_col++] = (float)color.b();
 			}
-
 		}
 	
 	}
@@ -980,7 +979,7 @@ void init_scene(void)
 	}
 
 	// Pixel buffer to be used in the Save Image function
-	img_Data = (uint8_t*)malloc(3 * RES_X*RES_Y * sizeof(uint8_t));
+	img_Data = (uint8_t*)malloc(3*RES_X*RES_Y * sizeof(uint8_t));
 	if (img_Data == NULL) exit(1);
 }
 

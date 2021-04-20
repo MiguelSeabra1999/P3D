@@ -19,8 +19,6 @@ Triangle::Triangle(Vector& P0, Vector& P1, Vector& P2)
 
 	//Calculate the Min and Max for bounding box
 
-	
-
 	Min = Vector(min(min(points[0].x, points[1].x), points[2].x), min(min(points[0].y, points[1].y), points[2].y), min(min(points[0].z, points[1].z), points[2].z));
 	Max = Vector(max(max(points[0].x, points[1].x), points[2].x), max(max(points[0].y, points[1].y), points[2].y), max(max(points[0].z, points[1].z), points[2].z));
 
@@ -51,8 +49,8 @@ bool Triangle::intercepts(Ray& r, float& t ) {
 	Vector projVec = r.direction % p0p2;
 	float det = p0p1 * projVec;
 
-	if (det < EPSILON) return false;
-	if (fabs(det) < EPSILON) return false;
+	if (det < EPSILON2) return false;
+	if (fabs(det) < EPSILON2) return false;
 	
 
 	float invDet = 1 / det;
