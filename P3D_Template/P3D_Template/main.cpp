@@ -37,7 +37,7 @@ unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = BVH_ACC;
+Accelerator Accel_Struct = NONE;
 Grid* grid_ptr;
 BVH* bvh_ptr;
 
@@ -613,25 +613,7 @@ void timer(int value)
 	FrameCount = 0;
 	glutTimerFunc(1000, timer, 0);
 }
-void PrintProgress(float progress)
-{
 
-	int barWidth = 70;
-
-	std::cout << "[";
-	int pos = barWidth * progress;
-	for (int i = 0; i < barWidth; ++i) {
-		if (i < pos) std::cout << "=";
-		else if (i == pos) std::cout << ">";
-		else std::cout << " ";
-	}
-	std::cout << "] " << int(progress * 100.0) << " %\r";
-	std::cout.flush();
-
-
-
-	std::cout << std::endl;
-}
 // Render function by primary ray casting from the eye towards the scene's objects
 
 void renderScene()
@@ -639,10 +621,7 @@ void renderScene()
 	int index_pos=0;
 	int index_col=0;
 	unsigned int counter = 0;
-	int pixelCount = RES_Y * RES_X;
-	int currentPixel = 0;
-	int barUpdateFreq = 100;
-	int barUpdateCount = barUpdateFreq;
+
 
 	if (drawModeEnabled) {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -705,13 +684,7 @@ void renderScene()
 
 				colors[index_col++] = (float)color.b();
 			}
-			currentPixel++;
-			barUpdateCount--;
-			if(barUpdateCount == 0)
-			{
-				PrintProgress(currentPixel/pixelCount);
-				barUpdateCount = barUpdateCount;
-			}
+
 		}
 	
 	}
