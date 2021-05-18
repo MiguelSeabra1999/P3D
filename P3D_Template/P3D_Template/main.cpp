@@ -37,7 +37,7 @@ unsigned int FrameCount = 0;
 
 // Accelerators
 typedef enum {NONE, GRID_ACC, BVH_ACC} Accelerator;
-Accelerator Accel_Struct = BVH_ACC;
+Accelerator Accel_Struct = GRID_ACC;
 Grid* grid_ptr;
 BVH* bvh_ptr;
 
@@ -62,7 +62,7 @@ char s[32];
 bool drawModeEnabled = true;
 
 //Enable antialiasing
-bool withAntialiasing = false;
+bool withAntialiasing = true;
 
 //Enable soft shadows
 bool softShadows = false;
@@ -70,7 +70,7 @@ bool softShadows = false;
 //Enable fuzzy reflection
 bool fuzzyReflections = false;
 
-bool P3F_scene = false; //choose between P3F scene or a built-in random scene
+bool P3F_scene = true; //choose between P3F scene or a built-in random scene
 float sppSquared = sqrt(SPP);
 
 // Points defined by 2 attributes: positions which are stored in vertices array and colors which are stored in colors array
@@ -94,6 +94,8 @@ Scene* scene = NULL;
 int RES_X, RES_Y;
 
 int WindowHandle = 0;
+float dofMod = 1.0;
+int dofDir = -1;
 
 Color rayTracing(Ray ray, int depth, float ior_1);
 void RayTraversal(int objectsN, Object*& currentObj, Ray& ray, float& dist, float& minDist, Object*& nearestObj);
@@ -187,6 +189,7 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 			{
 				shadingNormal = normal * -1;
 			}
+
 			if(!softShadows)
 			hardShadows(currentLight, actualHitPoint, L, normal, lightSum, obj, shadingNormal, ray);
 			else
@@ -203,17 +206,18 @@ Color trace(Object* obj, Vector& hitPoint, Vector& normal, Ray ray, float ior_1,
 
 	objectColor = lightSum.clamp(); 
 
+
 	if (depth > MAX_DEPTH)
 		return objectColor;
 
 	float reflectionIndex = obj->GetMaterial()->GetReflection();
-	if (reflectionIndex > 0)
+	if ( reflectionIndex > 0)
 	{
 		Reflection(normal, ray, actualHitPoint, hitPoint, reflectionColor, depth, ior_1, obj, reflectionIndex);
 	}
 
 	refractionIndex = obj->GetMaterial()->GetRefrIndex(); 
-	if ( obj->GetMaterial()->GetTransmittance() > 0)
+	if (obj->GetMaterial()->GetTransmittance() > 0)
 	{
 		float fromIor;
 		float toIor;
@@ -382,11 +386,12 @@ Color rayTracing( Ray ray, int depth, float ior_1)  //index of refraction of med
 	if(nearestObj != NULL)
 	{
 		normal = nearestObj->getNormal(hitPoint);
-		
+	
 	    return trace(nearestObj, hitPoint, normal, ray,ior_1, depth);
 	}
 	if(!P3F_scene)
 		return scene->GetBackgroundColor();
+//	return scene->GetBackgroundColor();
 	return scene->GetSkyboxColor(ray);
 }
 
@@ -605,6 +610,13 @@ void renderScene()
 	int index_col=0;
 	unsigned int counter = 0;
 
+	dofMod += 1*dofDir;
+	if (dofMod == 6)
+		dofDir = -1;
+	if (dofMod <= 1)
+		dofDir = 1;
+
+	
 
 	if (drawModeEnabled) {
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -632,8 +644,8 @@ void renderScene()
 						
 						if(scene->GetCamera()->GetAperture() > 0)
 						{
-
-							Ray ray = scene->GetCamera()->PrimaryRay(sample_unit_disk() * scene->GetCamera()->GetAperture(), pixelSample);
+							Ray ray = scene->GetCamera()->PrimaryRay(sample_unit_disk() * scene->GetCamera()->GetAperture()* dofMod, pixelSample);
+							
 							color = color + rayTracing(ray, 1, 1.0);
 						}
 						else
